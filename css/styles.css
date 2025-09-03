@@ -8,8 +8,8 @@
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
-    background-color: #f8f9fa;
-    color: #333;
+    background-color: var(--light-gray);
+    color: var(--text-color);
 }
 
 .container {
@@ -18,7 +18,7 @@ body {
     padding: 0 20px;
 }
 
-/* Color Variables */
+/* Root Variables */
 :root {
     --primary-green: #4a5d23;
     --desert-tan: #d2b48c;
@@ -31,8 +31,12 @@ body {
     --danger: #dc3545;
     --info: #17a2b8;
     --border-color: #dee2e6;
+    --text-color: #333;
     --shadow: 0 2px 4px rgba(0,0,0,0.1);
     --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
+    --transition: all 0.2s ease;
+    --border-radius: 8px;
+    --modal-z-index: 1000;
 }
 
 /* Header */
@@ -86,7 +90,7 @@ body {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: var(--transition);
     text-decoration: none;
     white-space: nowrap;
 }
@@ -122,8 +126,19 @@ body {
     color: var(--white);
 }
 
-.btn-icon {
-    font-size: 1.1rem;
+.btn-danger {
+    background-color: var(--danger);
+    color: var(--white);
+    border: 1px solid var(--danger);
+}
+
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
 }
 
 /* Statistics Section */
@@ -140,7 +155,7 @@ body {
 .stat-card {
     background: var(--white);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     text-align: center;
     border-top: 4px solid var(--primary-green);
@@ -171,7 +186,7 @@ body {
     align-items: center;
     background: var(--white);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow);
 }
 
@@ -222,7 +237,7 @@ body {
     background: var(--white);
     cursor: pointer;
     font-size: 0.9rem;
-    transition: all 0.2s ease;
+    transition: var(--transition);
 }
 
 .view-btn.active {
@@ -237,12 +252,11 @@ body {
 /* Jobs Section */
 .jobs-section {
     background: var(--white);
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     box-shadow: var(--shadow);
     overflow: hidden;
 }
 
-/* Table View */
 .jobs-table-container {
     overflow-x: auto;
 }
@@ -288,32 +302,6 @@ body {
 .status-lost { background: #ffebee; color: #d32f2f; }
 .status-no-bid { background: #f5f5f5; color: #616161; }
 
-/* Deadline Styling */
-.deadline {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-}
-
-.deadline-date {
-    font-weight: 500;
-}
-
-.deadline-countdown {
-    font-size: 0.8rem;
-    color: var(--medium-gray);
-}
-
-.deadline-overdue {
-    color: var(--danger);
-    font-weight: 600;
-}
-
-.deadline-urgent {
-    color: var(--warning);
-    font-weight: 600;
-}
-
 /* Action Buttons */
 .action-buttons {
     display: flex;
@@ -326,25 +314,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     font-size: 1rem;
-    transition: all 0.2s ease;
-}
-
-.edit-btn {
-    background: var(--info);
-    color: var(--white);
-}
-
-.edit-btn:hover {
-    background: #138496;
-}
-
-.delete-btn {
-    background: var(--danger);
-    color: var(--white);
-}
-
-.delete-btn:hover {
-    background: #c82333;
+    transition: var(--transition);
 }
 
 /* Card View */
@@ -358,9 +328,9 @@ body {
 .job-card {
     background: var(--white);
     border: 1px solid var(--border-color);
-    border-radius: 8px;
+    border-radius: var(--border-radius);
     padding: 1.5rem;
-    transition: all 0.2s ease;
+    transition: var(--transition);
 }
 
 .job-card:hover {
@@ -431,28 +401,39 @@ body {
     color: var(--dark-gray);
 }
 
-/* Modal Styles */
+/* Modal Styles - Fixed and Optimized */
 .modal-overlay {
     display: none;
     position: fixed;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.6);
+    z-index: var(--modal-z-index);
     align-items: center;
     justify-content: center;
+    padding: 20px;
+}
+
+.modal-overlay[style*="flex"] {
+    display: flex !important;
 }
 
 .modal {
     background: var(--white);
-    border-radius: 8px;
-    width: 90%;
+    border-radius: var(--border-radius);
+    width: 100%;
     max-width: 600px;
     max-height: 90vh;
-    overflow-y: auto;
+    overflow: hidden;
     box-shadow: var(--shadow-lg);
+    position: relative;
+    animation: modalSlideIn 0.3s ease;
+}
+
+.modal-large {
+    max-width: 900px;
 }
 
 .modal-small {
@@ -460,15 +441,19 @@ body {
 }
 
 .modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    background: var(--light-gray);
 }
 
-.modal-header h2 {
+.modal-header h2,
+.modal-header h3 {
     color: var(--primary-green);
+    margin: 0;
+    font-size: 1.25rem;
 }
 
 .modal-close {
@@ -478,274 +463,151 @@ body {
     cursor: pointer;
     color: var(--medium-gray);
     padding: 0.25rem;
+    line-height: 1;
+    transition: var(--transition);
+}
+
+.modal-close:hover {
+    color: var(--danger);
 }
 
 .modal-body {
     padding: 1.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
 }
 
 .modal-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
     gap: 1rem;
-    padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
+    background: var(--light-gray);
 }
 
-/* Authentication Styles */
-.auth-container {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, var(--primary-green), #5a6d2a);
-    z-index: 10000;
-}
-
-.auth-overlay {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-}
-
-.auth-modal {
-    background: var(--white);
-    border-radius: 12px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: var(--shadow-lg);
-    animation: fadeIn 0.3s ease;
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.auth-logo {
-    width: 60px;
-    height: 60px;
-    margin: 0 auto 1rem;
-    display: block;
-}
-
-.auth-header h2 {
-    color: var(--primary-green);
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-}
-
-.auth-header p {
-    color: var(--medium-gray);
-    font-size: 0.9rem;
-}
-
-.auth-tabs {
-    display: flex;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.auth-tab {
-    flex: 1;
-    padding: 0.75rem;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-weight: 500;
-    color: var(--medium-gray);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.auth-tab.active {
-    color: var(--primary-green);
-    border-bottom-color: var(--primary-green);
-}
-
-.auth-tab:hover {
-    color: var(--primary-green);
-}
-
-.auth-form {
-    display: flex;
-    flex-direction: column;
+/* Form Styles */
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin-bottom: 1rem;
 }
 
-.auth-submit-btn {
-    background: var(--primary-green);
-    color: var(--white);
-    border: none;
-    padding: 0.875rem;
-    border-radius: 6px;
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.form-group label {
     font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 0.95rem;
+    color: var(--dark-gray);
+    font-size: 0.9rem;
 }
 
-.auth-submit-btn:hover:not(:disabled) {
-    background: #5a6d2a;
-    transform: translateY(-1px);
-}
-
-.auth-submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.auth-error {
-    background: #ffebee;
-    color: #d32f2f;
+.form-group input,
+.form-group select,
+.form-group textarea {
     padding: 0.75rem;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
     font-size: 0.9rem;
-    border: 1px solid #ffcdd2;
-    margin-top: 1rem;
+    transition: var(--transition);
 }
 
-.auth-footer {
-    text-align: center;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
-    font-size: 0.9rem;
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(74, 93, 35, 0.1);
 }
 
-.auth-link {
-    color: var(--primary-green);
-    text-decoration: none;
-    font-weight: 500;
+/* Estimator Management */
+.estimator-management {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
 }
 
-.auth-link:hover {
-    text-decoration: underline;
+.estimator-form {
+    background: var(--light-gray);
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
 }
 
-/* Modal Styles Enhancement */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
-.modal-content {
-    background: var(--white);
-    border-radius: 8px;
-    width: 100%;
-    max-width: 600px;
-    max-height: 90vh;
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+}
+
+.estimator-list {
+    max-height: 400px;
     overflow-y: auto;
-    box-shadow: var(--shadow-lg);
-    animation: slideUp 0.3s ease;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 1rem;
+    background: var(--white);
 }
 
-.modal-header {
+.estimator-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
-    background: var(--light-gray);
-}
-
-.modal-header h3 {
-    color: var(--primary-green);
-    margin: 0;
-    font-size: 1.25rem;
-}
-
-.close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--medium-gray);
-    padding: 0.25rem;
-    line-height: 1;
-    transition: color 0.2s ease;
-}
-
-.close:hover {
-    color: var(--danger);
-}
-
-.modal form {
-    padding: 1.5rem;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
-    padding: 1.5rem;
-    border-top: 1px solid var(--border-color);
-    background: var(--light-gray);
-}
-
-.modal-actions button {
-    padding: 0.75rem 1.5rem;
-    border: none;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
     border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+    background: var(--white);
+    transition: var(--transition);
 }
 
-.modal-actions button[type="button"]:first-child {
-    background: var(--medium-gray);
-    color: var(--white);
+.estimator-card:hover {
+    background: var(--light-gray);
 }
 
-.modal-actions button[type="button"]:first-child:hover {
-    background: #5a6268;
+.estimator-info h4 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-color);
 }
 
-.modal-actions button[onclick*="save"] {
-    background: var(--primary-green);
-    color: var(--white);
+.estimator-info p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: var(--medium-gray);
 }
 
-.modal-actions button[onclick*="save"]:hover {
-    background: #5a6d2a;
+.estimator-actions {
+    display: flex;
+    gap: 0.5rem;
 }
 
-/* Export Modal Styles */
-#exportModal .modal-content {
-    max-width: 500px;
-}
-
-.export-section {
-    margin-bottom: 1.5rem;
-}
-
-.export-section h4 {
+/* Export Modal */
+.export-options h3 {
     margin-bottom: 1rem;
     color: var(--dark-gray);
-    font-size: 1rem;
 }
 
 .radio-group {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 1.5rem;
 }
 
 .radio-option {
@@ -756,7 +618,7 @@ body {
     padding: 0.75rem;
     border-radius: 6px;
     border: 1px solid var(--border-color);
-    transition: all 0.2s ease;
+    transition: var(--transition);
 }
 
 .radio-option:hover {
@@ -769,55 +631,11 @@ body {
     accent-color: var(--primary-green);
 }
 
-.radio-option label {
-    cursor: pointer;
-    font-weight: 500;
-    margin: 0;
-}
-
-.radio-option small {
-    color: var(--medium-gray);
-    display: block;
-    margin-top: 0.25rem;
-}
-
-/* Utility Classes */
-.font-weight-500 {
-    font-weight: 500;
-}
-
-.text-sm {
-    font-size: 0.875rem;
-}
-
-.text-muted {
-    color: var(--medium-gray);
-}
-
-.mt-1 {
-    margin-top: 0.25rem;
-}
-
-.fade-in {
-    animation: fadeIn 0.3s ease;
-}
-
 /* Animations */
-@keyframes fadeIn {
+@keyframes modalSlideIn {
     from {
         opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(-30px);
     }
     to {
         opacity: 1;
@@ -826,21 +644,6 @@ body {
 }
 
 /* Responsive Design */
-@media (max-width: 1024px) {
-    .controls-grid {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .filter-group {
-        flex-wrap: wrap;
-    }
-    
-    .jobs-cards-grid {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    }
-}
-
 @media (max-width: 768px) {
     .container {
         padding: 0 15px;
@@ -851,45 +654,32 @@ body {
         text-align: center;
     }
     
-    .header-actions {
-        width: 100%;
-        justify-content: center;
-    }
-    
     .stats-grid {
         grid-template-columns: repeat(2, 1fr);
     }
     
-    .jobs-table {
-        font-size: 0.8rem;
-    }
-    
-    .jobs-table th,
-    .jobs-table td {
-        padding: 0.75rem 0.5rem;
-    }
-    
-    .jobs-cards-grid {
+    .controls-grid {
         grid-template-columns: 1fr;
-        padding: 1rem;
+        gap: 1rem;
     }
     
-    .form-grid {
+    .form-grid,
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .estimator-management {
         grid-template-columns: 1fr;
     }
     
     .modal {
         width: 95%;
-        margin: 1rem;
+        max-height: 85vh;
     }
     
-    .filter-group {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .filter-select {
-        min-width: auto;
+    .jobs-cards-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem;
     }
 }
 
@@ -908,28 +698,7 @@ body {
         width: 100%;
     }
     
-    .auth-modal {
-        padding: 1.5rem;
-        margin: 1rem;
-    }
-    
-    .auth-tabs {
-        flex-direction: column;
-        border-bottom: none;
-    }
-    
-    .auth-tab {
-        border-bottom: 1px solid var(--border-color);
-        border-radius: 6px;
-        margin-bottom: 0.5rem;
-    }
-    
-    .auth-tab.active {
-        background: var(--light-gray);
-        border-color: var(--primary-green);
-    }
-    
-    .modal-content {
+    .modal {
         margin: 1rem;
         max-height: calc(100vh - 2rem);
     }

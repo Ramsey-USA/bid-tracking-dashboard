@@ -2,14 +2,45 @@
 
 class AuthComponent {
     constructor() {
+        this.auth = firebase.auth();
+        this.currentUser = null;
         this.container = null;
         this.currentMode = 'signin'; // 'signin' or 'signup'
-        this.init();
     }
 
+    // Initialize auth state listener
     init() {
-        this.createAuthContainer();
-        this.bindEvents();
+        console.log('🔄 Initializing AuthComponent...');
+        return new Promise((resolve) => {
+            this.auth.onAuthStateChanged((user) => {
+                this.currentUser = user;
+                if (user) {
+                    console.log('✅ User signed in:', user.email);
+                    this.hideAuthForm();
+                    resolve(user);
+                } else {
+                    console.log('👤 User signed out, showing auth form');
+                    this.showAuthForm();
+                    resolve(null);
+                }
+            });
+        });
+    }
+
+    showAuthForm() {
+        if (!this.container) {
+            this.createAuthContainer();
+            this.bindEvents();
+        }
+        this.container.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    }
+
+    hideAuthForm() {
+        if (this.container) {
+            this.container.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
     }
 
     createAuthContainer() {
@@ -154,28 +185,39 @@ class AuthComponent {
         this.showLoading(true);
 
         try {
-            // Check if Firebase service is available
-            if (!window.firebaseService || !window.firebaseService.isInitialized) {
-                throw new Error('Firebase service not initialized');
-            }
-
             let result;
             if (this.currentMode === 'signin') {
-                result = await window.firebaseService.signInWithEmail(email, password);
+                result = await this.auth.signInWithEmailAndPassword(email, password);
             } else {
-                result = await window.firebaseService.createUserWithEmail(email, password, displayName);
+                result = await this.auth.createUserWithEmailAndPassword(email, password);
+                // Update the display name
+                await result.user.updateProfile({ displayName });
             }
 
-            if (result.success) {
-                this.clearForm();
-                this.hideError();
-                // Authentication state change will be handled by the main app
-            } else {
-                this.showError(result.error);
-            }
+            this.clearForm();
+            this.hideError();
+            console.log('✅ Authentication successful');
         } catch (error) {
-            console.error('Auth error:', error);
-            this.showError('An unexpected error occurred. Please try again.');
+            console.error('❌ Auth error:', error);
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+            
+            switch (error.code) {
+                case 'auth/user-not-found':
+                case 'auth/wrong-password':
+                    errorMessage = 'Invalid email or password.';
+                    break;
+                case 'auth/email-already-in-use':
+                    errorMessage = 'This email is already registered.';
+                    break;
+                case 'auth/weak-password':
+                    errorMessage = 'Password is too weak.';
+                    break;
+                case 'auth/invalid-email':
+                    errorMessage = 'Invalid email address.';
+                    break;
+            }
+            
+            this.showError(errorMessage);
         } finally {
             this.showLoading(false);
         }
@@ -208,20 +250,13 @@ class AuthComponent {
         }
     }
 
-    show() {
-        if (this.container) {
-            this.container.style.display = 'block';
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    hide() {
-        if (this.container) {
-            this.container.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        }
+    // Sign out method
+    signOut() {
+        console.log('🚪 Signing out...');
+        return this.auth.signOut();
     }
 }
 
-window.AuthComponent = AuthComponent;
+// Create and make available globally
+window.AuthComponent = new AuthComponent();
 console.log('AuthComponent loaded');
