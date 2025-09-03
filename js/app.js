@@ -45,7 +45,7 @@ async function loadJobs() {
             allJobs = await FirebaseService.getJobs();
         } else {
             const stored = localStorage.getItem(STORAGE_KEYS.JOBS);
-            allJobs = stored ? JSON.parse(stored) : getSampleJobs();
+            allJobs = stored ? JSON.parse(stored) : [];
         }
         
         filteredJobs = [...allJobs];
@@ -61,7 +61,7 @@ async function loadJobs() {
         console.log(`Loaded ${allJobs.length} jobs`);
     } catch (error) {
         console.error('Error loading jobs:', error);
-        allJobs = getSampleJobs();
+        allJobs = [];
         filteredJobs = [...allJobs];
         syncEstimatorsWithJobs();
         displayJobs();
@@ -103,56 +103,11 @@ async function loadEstimators() {
 }
 
 function getSampleJobs() {
-    return [
-        {
-            id: '1',
-            company: 'MHC',
-            projectName: 'Downtown Office Complex',
-            clientName: 'ABC Development',
-            location: 'Pasco, WA',
-            estimator: 'John Smith',
-            deadline: '2024-02-15',
-            followUpDate: '2024-02-10',
-            status: 'In Progress',
-            bidAmount: 250000,
-            createdAt: '2024-01-15T10:00:00Z'
-        },
-        {
-            id: '2',
-            company: 'HDD',
-            projectName: 'Residential Towers Drywall',
-            clientName: 'XYZ Homes',
-            location: 'Spokane, WA',
-            estimator: 'Sarah Johnson',
-            deadline: '2024-02-20',
-            followUpDate: '2024-02-18',
-            status: 'Submitted',
-            bidAmount: 180000,
-            createdAt: '2024-01-10T14:30:00Z'
-        },
-        {
-            id: '3',
-            company: 'MHC',
-            projectName: 'Shopping Center Renovation',
-            clientName: 'Retail Partners LLC',
-            location: 'Richland, WA',
-            estimator: 'Mike Davis',
-            deadline: '2024-01-30',
-            followUpDate: null,
-            status: 'Won',
-            bidAmount: 320000,
-            createdAt: '2024-01-05T09:15:00Z'
-        }
-    ];
+    return [];
 }
 
 function getDefaultEstimators() {
-    return [
-        { id: '1', name: 'John Smith', email: 'john.smith@example.com' },
-        { id: '2', name: 'Sarah Johnson', email: 'sarah.johnson@example.com' },
-        { id: '3', name: 'Mike Davis', email: 'mike.davis@example.com' },
-        { id: '4', name: 'Lisa Wilson', email: 'lisa.wilson@example.com' }
-    ];
+    return [];
 }
 
 function saveToLocalStorage() {
@@ -197,21 +152,17 @@ function displayJobs(jobsToDisplay = null) {
         const followUpIndicator = followUpNeeded ? 
             '<span class="follow-up-indicator" title="Follow-up needed">🔔</span>' : '';
         
+        // Format estimating cost
+        const estimatingCostFormatted = job.estimatingCost ? formatCurrency(job.estimatingCost) : '<span class="text-muted">Not set</span>';
+        
+        // Format bond amount with percentage
+        let bondAmountFormatted = '<span class="text-muted">Not set</span>';
+        if (job.bondAmount && job.bondPercentage) {
+            bondAmountFormatted = `${formatCurrency(job.bondAmount)} <small class="bond-percentage">(${job.bondPercentage}%)</small>`;
+        }
+        
         // Format bid amount
         const bidAmountFormatted = job.bidAmount ? formatCurrency(job.bidAmount) : '<span class="text-muted">Not set</span>';
-        
-        // Format actual cost with accuracy indicator
-        let actualCostFormatted = '<span class="text-muted">Pending</span>';
-        let accuracyIndicator = '';
-        
-        if (job.actualCost && job.bidAmount) {
-            actualCostFormatted = formatCurrency(job.actualCost);
-            const accuracy = ((job.bidAmount - Math.abs(job.bidAmount - job.actualCost)) / job.bidAmount) * 100;
-            const isOverBudget = job.actualCost > job.bidAmount;
-            accuracyIndicator = `<div class="accuracy-indicator ${isOverBudget ? 'over-budget' : 'under-budget'}" title="Accuracy: ${accuracy.toFixed(1)}%">
-                ${isOverBudget ? '🔺' : '🔻'} ${accuracy.toFixed(1)}%
-            </div>`;
-        }
         
         const row = tableBody.insertRow();
         row.className = job.company === 'MHC' ? 'mhc-row' : 'hdd-row';
@@ -226,13 +177,9 @@ function displayJobs(jobsToDisplay = null) {
             <td>${job.clientName}</td>
             <td>${job.location}</td>
             <td>${job.estimator}</td>
+            <td><strong>${estimatingCostFormatted}</strong></td>
+            <td><strong>${bondAmountFormatted}</strong></td>
             <td><strong>${bidAmountFormatted}</strong></td>
-            <td>
-                <div class="cost-cell">
-                    <strong>${actualCostFormatted}</strong>
-                    ${accuracyIndicator}
-                </div>
-            </td>
             <td class="${isOverdue ? 'overdue' : ''}">${formatDate(job.deadline)}</td>
             <td>${job.followUpDate ? formatDate(job.followUpDate) : '<span class="text-muted">None set</span>'}</td>
             <td><span class="status-badge status-${job.status.toLowerCase().replace(/\s+/g, '-')}">${job.status}</span></td>
@@ -257,11 +204,9 @@ function displayJobs(jobsToDisplay = null) {
                 <p><strong>Client:</strong> ${job.clientName}</p>
                 <p><strong>Location:</strong> ${job.location}</p>
                 <p><strong>Estimator:</strong> ${job.estimator}</p>
+                <p><strong>Estimating Cost:</strong> <span class="estimating-cost">${estimatingCostFormatted}</span></p>
+                <p><strong>Bond Amount:</strong> <span class="bond-amount">${bondAmountFormatted}</span></p>
                 <p><strong>Bid Amount:</strong> <span class="bid-amount">${bidAmountFormatted}</span></p>
-                <p><strong>Actual Cost:</strong> 
-                    <span class="actual-cost">${actualCostFormatted}</span>
-                    ${accuracyIndicator}
-                </p>
                 <p><strong>Deadline:</strong> <span class="${isOverdue ? 'overdue-text' : ''}">${formatDate(job.deadline)}</span></p>
                 <p><strong>Follow-up:</strong> ${job.followUpDate ? 
                     `<span class="${followUpNeeded ? 'follow-up-needed' : ''}">${formatDate(job.followUpDate)}</span>` : 
@@ -873,24 +818,59 @@ function populateJobForm(job) {
     document.getElementById('estimator').value = job.estimator || '';
     document.getElementById('deadline').value = job.deadline || '';
     document.getElementById('followUpDate').value = job.followUpDate || '';
+    document.getElementById('estimatingCost').value = job.estimatingCost || '';
+    document.getElementById('bondPercentage').value = job.bondPercentage || '';
     document.getElementById('bidAmount').value = job.bidAmount || '';
+    document.getElementById('bidNumber').value = job.bidNumber || '';
     document.getElementById('status').value = job.status || '';
+    
+    // Handle custom bond percentage
+    if (job.bondPercentage && !['5', '10'].includes(job.bondPercentage.toString())) {
+        document.getElementById('bondPercentage').value = 'custom';
+        document.getElementById('customBondPercentage').value = job.bondPercentage;
+        document.getElementById('customBondPercentage').style.display = 'block';
+    }
+    
+    // Calculate and display bond amount if estimating cost and percentage exist
+    if (job.estimatingCost && job.bondPercentage) {
+        calculateBondAmount();
+    }
 }
 
 async function handleJobSubmit(e) {
     e.preventDefault();
     
     const formData = new FormData(e.target);
+    
+    // Get values directly from form elements to ensure we capture all data
+    const estimatingCost = parseFloat(document.getElementById('estimatingCost').value) || null;
+    let bondPercentage = parseFloat(document.getElementById('bondPercentage').value) || null;
+    
+    // Handle custom bond percentage
+    if (document.getElementById('bondPercentage').value === 'custom') {
+        bondPercentage = parseFloat(document.getElementById('customBondPercentage').value) || null;
+    }
+    
+    // Calculate bond amount
+    let bondAmount = null;
+    if (estimatingCost && bondPercentage) {
+        bondAmount = (estimatingCost * bondPercentage) / 100;
+    }
+    
     const jobData = {
-        company: formData.get('company') || document.getElementById('company').value,
-        projectName: formData.get('projectName') || document.getElementById('projectName').value,
-        clientName: formData.get('clientName') || document.getElementById('clientName').value,
-        location: formData.get('location') || document.getElementById('location').value,
-        estimator: formData.get('estimator') || document.getElementById('estimator').value,
-        deadline: formData.get('deadline') || document.getElementById('deadline').value,
-        followUpDate: formData.get('followUpDate') || document.getElementById('followUpDate').value || null,
-        bidAmount: parseFloat(formData.get('bidAmount') || document.getElementById('bidAmount').value) || null,
-        status: formData.get('status') || document.getElementById('status').value
+        company: document.getElementById('company').value,
+        projectName: document.getElementById('projectName').value,
+        clientName: document.getElementById('clientName').value,
+        location: document.getElementById('location').value,
+        estimator: document.getElementById('estimator').value,
+        deadline: document.getElementById('deadline').value,
+        followUpDate: document.getElementById('followUpDate').value || null,
+        estimatingCost: estimatingCost,
+        bondPercentage: bondPercentage,
+        bondAmount: bondAmount,
+        bidAmount: parseFloat(document.getElementById('bidAmount').value) || null,
+        bidNumber: document.getElementById('bidNumber').value || null,
+        status: document.getElementById('status').value
     };
 
     // Validate required fields
@@ -1161,22 +1141,18 @@ function openExportModal() {
 }
 
 function generateCSV(jobs) {
-    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Bid Amount', 'Actual Cost', 'Accuracy', 'Deadline', 'Status', 'Company', 'Created At'];
+    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Estimating Cost', 'Bond %', 'Bond Amount', 'Bid Amount', 'Actual Cost', 'Deadline', 'Status', 'Company', 'Created At'];
     const rows = jobs.map(job => {
-        let accuracy = 'N/A';
-        if (job.bidAmount && job.actualCost) {
-            const acc = ((job.bidAmount - Math.abs(job.bidAmount - job.actualCost)) / job.bidAmount) * 100;
-            accuracy = `${acc.toFixed(1)}%`;
-        }
-        
         return [
             job.projectName,
             job.clientName,
             job.location,
             job.estimator,
+            job.estimatingCost || '',
+            job.bondPercentage ? `${job.bondPercentage}%` : '',
+            job.bondAmount || '',
             job.bidAmount || '',
             job.actualCost || '',
-            accuracy,
             job.deadline,
             job.status,
             job.company === 'MHC' ? 'MH Construction' : 'High Desert Drywall',
@@ -1368,3 +1344,32 @@ function switchView(viewType) {
     
     console.log(`Switched to ${viewType} view`);
 }
+
+// Update function to calculate bond amount using custom percentage
+function calculateBondAmount() {
+    const estimatingCost = parseFloat(document.getElementById('estimatingCost').value) || 0;
+    let bondPercentage;
+    
+    // Check if custom percentage is being used
+    if (document.getElementById('bondPercentage').value === 'custom') {
+        bondPercentage = parseFloat(document.getElementById('customBondPercentage').value) || 0;
+    } else {
+        bondPercentage = parseFloat(document.getElementById('bondPercentage').value) || 0;
+    }
+    
+    const bondAmountDisplay = document.getElementById('bondAmountDisplay');
+    
+    if (estimatingCost && bondPercentage && bondAmountDisplay) {
+        const bondAmount = (estimatingCost * bondPercentage) / 100;
+        bondAmountDisplay.textContent = formatCurrency(bondAmount);
+        bondAmountDisplay.style.color = '#28a745';
+        bondAmountDisplay.style.fontWeight = '600';
+    } else if (bondAmountDisplay) {
+        bondAmountDisplay.textContent = '$0';
+        bondAmountDisplay.style.color = '#6c757d';
+        bondAmountDisplay.style.fontWeight = '400';
+    }
+}
+
+// Export the function globally
+window.calculateBondAmount = calculateBondAmount;
