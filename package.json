@@ -1,0 +1,15 @@
+{
+  "name": "bid-tracking-dashboard",
+  "version": "1.0.0",
+  "description": "A comprehensive, responsive web application for tracking construction project bids, designed specifically for MH Construction's estimators and management team. The dashboard will help us monitor the status of each bid, track key details, and improve our overall project management efficiency.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "firebase": "^12.2.1"
+  }
+}

@@ -1,78 +1,232 @@
-// Bid Tracking Dashboard - Main JavaScript File
+// Bid Tracking Dashboard - Complete Application Implementation
 
 class BidTrackingDashboard {
     constructor() {
         this.jobs = [];
+        this.estimators = [];
         this.filteredJobs = [];
         this.currentEditId = null;
         this.currentView = 'table';
+        this.authComponent = null;
+        this.isLoading = false;
         
         this.init();
     }
 
-    init() {
-        this.loadData();
-        this.bindEvents();
-        this.loadSampleData();
-        this.updateDisplay();
-        this.populateEstimatorFilter();
-    }
-
-    // Data Management
-    loadData() {
-        const savedJobs = localStorage.getItem('constructionJobs');
-        if (savedJobs) {
-            this.jobs = JSON.parse(savedJobs);
+    async init() {
+        this.showLoading(true);
+        
+        try {
+            console.log('🚀 Initializing Bid Tracking Dashboard...');
+            
+            // Wait for all dependencies to load
+            await this.waitForDependencies();
+            
+            // Initialize Firebase service
+            await window.firebaseService.init();
+            
+            // Override Firebase auth state change handler
+            window.firebaseService.onAuthStateChange = (user) => this.handleAuthStateChange(user);
+            
+            // Initialize auth component
+            this.authComponent = new window.AuthComponent();
+            
+            // Bind all event handlers
+            this.bindEvents();
+            
+            console.log('✅ Dashboard initialized successfully');
+        } catch (error) {
+            console.error('❌ Initialization error:', error);
+            this.showNotification('Failed to initialize application: ' + error.message, 'error');
+        } finally {
+            this.showLoading(false);
         }
     }
 
-    saveData() {
-        localStorage.setItem('constructionJobs', JSON.stringify(this.jobs));
+    async waitForDependencies() {
+        return new Promise((resolve, reject) => {
+            let attempts = 0;
+            const maxAttempts = 100;
+            
+            const checkDependencies = () => {
+                console.log(`Checking dependencies, attempt ${attempts + 1}`);
+                
+                if (typeof firebase !== 'undefined' && 
+                    typeof window.firebaseConfig !== 'undefined' &&
+                    typeof window.AuthComponent !== 'undefined' &&
+                    typeof window.firebaseService !== 'undefined') {
+                    console.log('✅ All dependencies loaded successfully');
+                    resolve();
+                } else if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(checkDependencies, 50);
+                } else {
+                    console.error('❌ Dependencies check failed:', {
+                        firebase: typeof firebase,
+                        firebaseConfig: typeof window.firebaseConfig,
+                        AuthComponent: typeof window.AuthComponent,
+                        firebaseService: typeof window.firebaseService
+                    });
+                    reject(new Error('Dependencies failed to load'));
+                }
+            };
+            
+            checkDependencies();
+        });
     }
 
-    loadSampleData() {
-        if (this.jobs.length === 0) {
-            this.jobs = [
-                {
-                    id: Date.now() + 1,
-                    projectName: "Downtown Office Complex",
-                    clientName: "Metro Development Corp",
-                    location: "123 Main St, Downtown",
-                    estimator: "John Smith",
-                    deadline: "2024-02-15",
-                    status: "In Progress",
-                    description: "12-story office building with underground parking and retail space on ground floor"
-                },
-                {
-                    id: Date.now() + 2,
-                    projectName: "Residential Subdivision Phase 2",
-                    clientName: "Sunrise Homes LLC",
-                    location: "Oak Valley Drive",
-                    estimator: "Sarah Johnson",
-                    deadline: "2024-01-30",
-                    status: "Submitted",
-                    description: "45 single-family homes with community amenities including playground and walking trails"
-                },
-                {
-                    id: Date.now() + 3,
-                    projectName: "Highway 101 Bridge Repair",
-                    clientName: "State Department of Transportation",
-                    location: "Highway 101, Mile Marker 45",
-                    estimator: "Mike Wilson",
-                    deadline: "2024-01-25",
-                    status: "Follow-up Required",
-                    description: "Structural repairs and deck replacement for 200-foot bridge span"
-                }
-            ];
-            this.saveData();
+    showLoading(show) {
+        let loadingOverlay = document.getElementById('loadingOverlay');
+        
+        if (show) {
+            if (!loadingOverlay) {
+                loadingOverlay = document.createElement('div');
+                loadingOverlay.id = 'loadingOverlay';
+                loadingOverlay.className = 'loading-overlay';
+                loadingOverlay.innerHTML = `
+                    <div class="loading-content">
+                        <div class="loading-spinner"></div>
+                        <p>Loading...</p>
+                    </div>
+                `;
+                document.body.appendChild(loadingOverlay);
+            }
+            loadingOverlay.style.display = 'flex';
+        } else {
+            if (loadingOverlay) {
+                loadingOverlay.style.display = 'none';
+            }
+        }
+    }
+
+    showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <span>${message}</span>
+            <button class="notification-close">&times;</button>
+        `;
+        
+        document.body.appendChild(notification);
+
+        // Close button functionality
+        notification.querySelector('.notification-close').addEventListener('click', () => {
+            notification.remove();
+        });
+
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    handleAuthStateChange(user) {
+        if (user) {
+            console.log('👤 User signed in:', user.displayName || user.email);
+            this.authComponent.hide();
+            this.loadData();
+            this.setupRealtimeListeners();
+        } else {
+            console.log('👤 User signed out');
+            this.authComponent.show();
+            this.clearData();
+            window.firebaseService.cleanup();
+        }
+        this.showLoading(false);
+    }
+
+    clearData() {
+        this.jobs = [];
+        this.estimators = [];
+        this.filteredJobs = [];
+        this.updateDisplay();
+    }
+
+    setupRealtimeListeners() {
+        // Listen for real-time job updates
+        window.firebaseService.subscribeToJobs((jobs, error) => {
+            if (error) {
+                this.showNotification('Error loading jobs: ' + error.message, 'error');
+                return;
+            }
+            
+            this.jobs = jobs || [];
+            this.updateDisplay();
+            this.populateEstimatorFilter();
+        });
+    }
+
+    async loadData() {
+        this.showLoading(true);
+        
+        try {
+            console.log('📊 Loading data from Firebase...');
+            
+            // Load jobs and estimators from Firebase
+            const [jobsResult, estimatorsResult] = await Promise.all([
+                window.firebaseService.getJobs(),
+                window.firebaseService.getEstimators()
+            ]);
+
+            if (jobsResult.success) {
+                this.jobs = jobsResult.data;
+                console.log(`✅ Loaded ${this.jobs.length} jobs`);
+            } else {
+                this.showNotification('Failed to load jobs: ' + jobsResult.error, 'error');
+            }
+
+            if (estimatorsResult.success) {
+                this.estimators = estimatorsResult.data;
+                console.log(`✅ Loaded ${this.estimators.length} estimators`);
+            } else {
+                // If no estimators exist, create default ones
+                console.log('📝 Creating default estimators...');
+                await this.createDefaultEstimators();
+            }
+
+            this.updateDisplay();
+            this.populateEstimatorFilter();
+            this.populateEstimatorOptions();
+        } catch (error) {
+            console.error('❌ Failed to load data:', error);
+            this.showNotification('Failed to load data: ' + error.message, 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async createDefaultEstimators() {
+        const defaultEstimators = [
+            { name: 'John Smith', email: 'john.smith@mhconstruction.com', active: true },
+            { name: 'Sarah Johnson', email: 'sarah.johnson@mhconstruction.com', active: true },
+            { name: 'Mike Wilson', email: 'mike.wilson@mhconstruction.com', active: true }
+        ];
+
+        for (const estimator of defaultEstimators) {
+            await window.firebaseService.addEstimator(estimator);
+        }
+
+        const result = await window.firebaseService.getEstimators();
+        if (result.success) {
+            this.estimators = result.data;
         }
     }
 
     // Event Binding
     bindEvents() {
+        console.log('🔗 Binding event handlers...');
+        
         // Modal controls
         document.getElementById('addJobBtn').addEventListener('click', () => this.openJobModal());
         document.getElementById('exportBtn').addEventListener('click', () => this.openExportModal());
+        
+        // Add sign out button event
+        const signOutBtn = document.getElementById('signOutBtn');
+        if (signOutBtn) {
+            signOutBtn.addEventListener('click', () => this.signOut());
+        }
         
         // Search and filters
         document.getElementById('searchInput').addEventListener('input', (e) => this.handleSearch(e.target.value));
@@ -93,27 +247,29 @@ class BidTrackingDashboard {
         });
     }
 
-    // Job Management
+    // Modal Management
     openJobModal(job = null) {
         this.currentEditId = job ? job.id : null;
-        const modal = document.getElementById('jobModal');
-        const title = document.getElementById('modalTitle');
-        
-        title.textContent = job ? 'Edit Job' : 'Add New Job';
         
         if (job) {
-            document.getElementById('projectName').value = job.projectName;
-            document.getElementById('clientName').value = job.clientName;
-            document.getElementById('location').value = job.location;
-            document.getElementById('estimator').value = job.estimator;
-            document.getElementById('deadline').value = job.deadline;
-            document.getElementById('status').value = job.status;
+            // Populate form with job data for editing
+            document.getElementById('projectName').value = job.projectName || '';
+            document.getElementById('clientName').value = job.clientName || '';
+            document.getElementById('location').value = job.location || '';
+            document.getElementById('estimator').value = job.estimator || '';
+            document.getElementById('deadline').value = job.deadline || '';
+            document.getElementById('status').value = job.status || 'In Progress';
             document.getElementById('description').value = job.description || '';
+            
+            document.getElementById('modalTitle').textContent = 'Edit Job';
         } else {
+            // Clear form for new job
             document.getElementById('jobForm').reset();
+            document.getElementById('status').value = 'In Progress';
+            document.getElementById('modalTitle').textContent = 'Add New Job';
         }
         
-        modal.style.display = 'flex';
+        document.getElementById('jobModal').style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
 
@@ -123,10 +279,18 @@ class BidTrackingDashboard {
         this.currentEditId = null;
     }
 
-    saveJob() {
-        const form = document.getElementById('jobForm');
-        const formData = new FormData(form);
-        
+    openExportModal() {
+        document.getElementById('exportModal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeExportModal() {
+        document.getElementById('exportModal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    // Job Management
+    async saveJob() {
         const jobData = {
             projectName: document.getElementById('projectName').value.trim(),
             clientName: document.getElementById('clientName').value.trim(),
@@ -140,42 +304,69 @@ class BidTrackingDashboard {
         // Validation
         if (!jobData.projectName || !jobData.clientName || !jobData.location || 
             !jobData.estimator || !jobData.deadline || !jobData.status) {
-            alert('Please fill in all required fields.');
+            this.showNotification('Please fill in all required fields.', 'error');
             return;
         }
 
-        if (this.currentEditId) {
-            // Edit existing job
-            const jobIndex = this.jobs.findIndex(job => job.id === this.currentEditId);
-            if (jobIndex !== -1) {
-                this.jobs[jobIndex] = { ...this.jobs[jobIndex], ...jobData };
+        this.showLoading(true);
+
+        try {
+            let result;
+            if (this.currentEditId) {
+                result = await window.firebaseService.updateJob(this.currentEditId, jobData);
+            } else {
+                result = await window.firebaseService.addJob(jobData);
             }
-        } else {
-            // Add new job
-            jobData.id = Date.now();
-            this.jobs.push(jobData);
-        }
 
-        this.saveData();
-        this.updateDisplay();
-        this.populateEstimatorFilter();
-        this.closeJobModal();
-        
-        const action = this.currentEditId ? 'updated' : 'added';
-        this.showNotification(`Job ${action} successfully!`);
-    }
-
-    deleteJob(id) {
-        if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
-            this.jobs = this.jobs.filter(job => job.id !== id);
-            this.saveData();
-            this.updateDisplay();
-            this.populateEstimatorFilter();
-            this.showNotification('Job deleted successfully!');
+            if (result.success) {
+                const action = this.currentEditId ? 'updated' : 'added';
+                this.showNotification(`Job ${action} successfully!`, 'success');
+                this.closeJobModal();
+            } else {
+                this.showNotification('Failed to save job: ' + result.error, 'error');
+            }
+        } catch (error) {
+            this.showNotification('Failed to save job: ' + error.message, 'error');
+        } finally {
+            this.showLoading(false);
         }
     }
 
-    // Search and Filter
+    async deleteJob(id) {
+        if (!confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+            return;
+        }
+
+        this.showLoading(true);
+
+        try {
+            const result = await window.firebaseService.deleteJob(id);
+            
+            if (result.success) {
+                this.showNotification('Job deleted successfully!', 'success');
+            } else {
+                this.showNotification('Failed to delete job: ' + result.error, 'error');
+            }
+        } catch (error) {
+            this.showNotification('Failed to delete job: ' + error.message, 'error');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async signOut() {
+        if (confirm('Are you sure you want to sign out?')) {
+            this.showLoading(true);
+            const result = await window.firebaseService.signOut();
+            
+            if (!result.success) {
+                this.showNotification('Failed to sign out: ' + result.error, 'error');
+                this.showLoading(false);
+            }
+        }
+    }
+
+    // Search and Filter Methods
     handleSearch(query) {
         this.applyFilters();
     }
@@ -222,6 +413,22 @@ class BidTrackingDashboard {
             option.value = estimator;
             option.textContent = estimator;
             estimatorFilter.appendChild(option);
+        });
+    }
+
+    populateEstimatorOptions() {
+        const estimatorSelect = document.getElementById('estimator');
+        
+        // Clear existing options except the first one
+        while (estimatorSelect.children.length > 1) {
+            estimatorSelect.removeChild(estimatorSelect.lastChild);
+        }
+        
+        this.estimators.forEach(estimator => {
+            const option = document.createElement('option');
+            option.value = estimator.name;
+            option.textContent = estimator.name;
+            estimatorSelect.appendChild(option);
         });
     }
 
@@ -289,7 +496,7 @@ class BidTrackingDashboard {
                         <button class="action-btn edit-btn" onclick="dashboard.openJobModal(${JSON.stringify(job).replace(/"/g, '&quot;')})" title="Edit">
                             ✏️
                         </button>
-                        <button class="action-btn delete-btn" onclick="dashboard.deleteJob(${job.id})" title="Delete">
+                        <button class="action-btn delete-btn" onclick="dashboard.deleteJob('${job.id}')" title="Delete">
                             🗑️
                         </button>
                     </div>
@@ -348,7 +555,7 @@ class BidTrackingDashboard {
                         <button class="action-btn edit-btn" onclick="dashboard.openJobModal(${JSON.stringify(job).replace(/"/g, '&quot;')})" title="Edit">
                             ✏️ Edit
                         </button>
-                        <button class="action-btn delete-btn" onclick="dashboard.deleteJob(${job.id})" title="Delete">
+                        <button class="action-btn delete-btn" onclick="dashboard.deleteJob('${job.id}')" title="Delete">
                             🗑️ Delete
                         </button>
                     </div>
@@ -384,17 +591,7 @@ class BidTrackingDashboard {
         this.updateJobsDisplay();
     }
 
-    // Export Functionality
-    openExportModal() {
-        document.getElementById('exportModal').style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-    }
-
-    closeExportModal() {
-        document.getElementById('exportModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
-
+    // Export functionality
     performExport() {
         const format = document.querySelector('input[name="exportFormat"]:checked').value;
         const dataSelection = document.querySelector('input[name="exportData"]:checked').value;
@@ -429,7 +626,6 @@ class BidTrackingDashboard {
     }
 
     exportToPDF(data) {
-        // Simple PDF export using HTML and print styles
         const printWindow = window.open('', '_blank');
         const htmlContent = `
             <!DOCTYPE html>
@@ -445,13 +641,6 @@ class BidTrackingDashboard {
                     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
                     th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 11px; }
                     th { background-color: #f8f9fa; font-weight: bold; }
-                    .status { padding: 2px 6px; border-radius: 3px; font-size: 10px; }
-                    .status-in-progress { background: #e3f2fd; color: #1976d2; }
-                    .status-submitted { background: #f3e5f5; color: #7b1fa2; }
-                    .status-follow-up-required { background: #fff3e0; color: #f57c00; }
-                    .status-won { background: #e8f5e8; color: #388e3c; }
-                    .status-lost { background: #ffebee; color: #d32f2f; }
-                    .status-no-bid { background: #f5f5f5; color: #616161; }
                     @media print { body { margin: 0; } }
                 </style>
             </head>
@@ -484,7 +673,7 @@ class BidTrackingDashboard {
                                 <td>${this.escapeHtml(job.location)}</td>
                                 <td>${this.escapeHtml(job.estimator)}</td>
                                 <td>${this.formatDate(job.deadline)}</td>
-                                <td><span class="status ${this.getStatusClass(job.status)}">${job.status}</span></td>
+                                <td>${job.status}</td>
                                 <td>${this.escapeHtml(job.description || '')}</td>
                             </tr>
                         `).join('')}
@@ -573,58 +762,21 @@ class BidTrackingDashboard {
         div.textContent = text;
         return div.innerHTML;
     }
-
-    showNotification(message) {
-        // Simple notification - you could enhance this with a proper notification system
-        const notification = document.createElement('div');
-        notification.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #28a745;
-            color: white;
-            padding: 12px 20px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            z-index: 10000;
-            font-weight: 500;
-        `;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-
-        setTimeout(() => {
-            notification.style.transform = 'translateX(400px)';
-            notification.style.transition = 'transform 0.3s ease';
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 300);
-        }, 3000);
-    }
 }
+
+// Initialize the dashboard when dependencies are ready
+let dashboard;
 
 // Global functions for onclick handlers
-function openJobModal() {
-    dashboard.openJobModal();
-}
+window.openJobModal = () => dashboard?.openJobModal();
+window.closeJobModal = () => dashboard?.closeJobModal();
+window.saveJob = () => dashboard?.saveJob();
+window.closeExportModal = () => dashboard?.closeExportModal();
+window.performExport = () => dashboard?.performExport();
+window.signOut = () => dashboard?.signOut();
 
-function closeJobModal() {
-    dashboard.closeJobModal();
-}
+// Initialize dashboard
+console.log('📱 Creating dashboard instance...');
+dashboard = new BidTrackingDashboard();
 
-function saveJob() {
-    dashboard.saveJob();
-}
-
-function closeExportModal() {
-    dashboard.closeExportModal();
-}
-
-function performExport() {
-    dashboard.performExport();
-}
-
-// Initialize the dashboard when the page loads
-let dashboard;
-document.addEventListener('DOMContentLoaded', function() {
-    dashboard = new BidTrackingDashboard();
-});
+console.log('🎯 App.js loaded completely');
