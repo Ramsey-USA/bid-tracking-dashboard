@@ -114,6 +114,7 @@ function getSampleJobs() {
             deadline: '2024-02-15',
             followUpDate: '2024-02-10',
             status: 'In Progress',
+            bidAmount: 250000,
             createdAt: '2024-01-15T10:00:00Z'
         },
         {
@@ -126,6 +127,7 @@ function getSampleJobs() {
             deadline: '2024-02-20',
             followUpDate: '2024-02-18',
             status: 'Submitted',
+            bidAmount: 180000,
             createdAt: '2024-01-10T14:30:00Z'
         },
         {
@@ -138,6 +140,7 @@ function getSampleJobs() {
             deadline: '2024-01-30',
             followUpDate: null,
             status: 'Won',
+            bidAmount: 320000,
             createdAt: '2024-01-05T09:15:00Z'
         }
     ];
@@ -194,6 +197,9 @@ function displayJobs(jobsToDisplay = null) {
         const followUpIndicator = followUpNeeded ? 
             '<span class="follow-up-indicator" title="Follow-up needed">🔔</span>' : '';
         
+        // Format bid amount
+        const bidAmountFormatted = job.bidAmount ? formatCurrency(job.bidAmount) : '<span class="text-muted">Not set</span>';
+        
         const row = tableBody.insertRow();
         row.innerHTML = `
             <td>
@@ -206,6 +212,7 @@ function displayJobs(jobsToDisplay = null) {
             <td>${job.clientName}</td>
             <td>${job.location}</td>
             <td>${job.estimator}</td>
+            <td><strong>${bidAmountFormatted}</strong></td>
             <td class="${isOverdue ? 'overdue' : ''}">${formatDate(job.deadline)}</td>
             <td>${job.followUpDate ? formatDate(job.followUpDate) : '<span class="text-muted">None set</span>'}</td>
             <td><span class="status-badge status-${job.status.toLowerCase().replace(/\s+/g, '-')}">${job.status}</span></td>
@@ -230,6 +237,7 @@ function displayJobs(jobsToDisplay = null) {
                 <p><strong>Client:</strong> ${job.clientName}</p>
                 <p><strong>Location:</strong> ${job.location}</p>
                 <p><strong>Estimator:</strong> ${job.estimator}</p>
+                <p><strong>Bid Amount:</strong> <span class="bid-amount">${bidAmountFormatted}</span></p>
                 <p><strong>Deadline:</strong> <span class="${isOverdue ? 'overdue-text' : ''}">${formatDate(job.deadline)}</span></p>
                 <p><strong>Follow-up:</strong> ${job.followUpDate ? 
                     `<span class="${followUpNeeded ? 'follow-up-needed' : ''}">${formatDate(job.followUpDate)}</span>` : 
@@ -423,6 +431,9 @@ function updateStatistics(jobsToAnalyze = null) {
         job.status === 'In Progress'
     ).length;
 
+    // Calculate bid totals
+    const totalBidValue = jobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
+
     // Calculate MHC totals
     const mhcJobs = jobs.filter(job => job.company === 'MHC');
     const totalJobsMHC = mhcJobs.length;
@@ -439,6 +450,7 @@ function updateStatistics(jobsToAnalyze = null) {
         new Date(job.followUpDate) <= now && 
         job.status === 'In Progress'
     ).length;
+    const totalBidValueMHC = mhcJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
 
     // Calculate HDD totals
     const hddJobs = jobs.filter(job => job.company === 'HDD');
@@ -456,6 +468,7 @@ function updateStatistics(jobsToAnalyze = null) {
         new Date(job.followUpDate) <= now && 
         job.status === 'In Progress'
     ).length;
+    const totalBidValueHDD = hddJobs.reduce((sum, job) => sum + (job.bidAmount || 0), 0);
 
     // Update combined totals
     document.getElementById('totalJobs').textContent = totalJobs;
@@ -463,6 +476,7 @@ function updateStatistics(jobsToAnalyze = null) {
     document.getElementById('submittedJobs').textContent = submittedJobs;
     document.getElementById('overdueJobs').textContent = overdueJobs;
     document.getElementById('followUpJobs').textContent = followUpNeeded;
+    document.getElementById('totalBidValue').textContent = formatCurrency(totalBidValue);
 
     // Update MHC totals
     document.getElementById('totalJobsMHC').textContent = totalJobsMHC;
@@ -470,6 +484,7 @@ function updateStatistics(jobsToAnalyze = null) {
     document.getElementById('submittedJobsMHC').textContent = submittedJobsMHC;
     document.getElementById('overdueJobsMHC').textContent = overdueJobsMHC;
     document.getElementById('followUpJobsMHC').textContent = followUpNeededMHC;
+    document.getElementById('totalBidValueMHC').textContent = formatCurrency(totalBidValueMHC);
 
     // Update HDD totals
     document.getElementById('totalJobsHDD').textContent = totalJobsHDD;
@@ -477,6 +492,7 @@ function updateStatistics(jobsToAnalyze = null) {
     document.getElementById('submittedJobsHDD').textContent = submittedJobsHDD;
     document.getElementById('overdueJobsHDD').textContent = overdueJobsHDD;
     document.getElementById('followUpJobsHDD').textContent = followUpNeededHDD;
+    document.getElementById('totalBidValueHDD').textContent = formatCurrency(totalBidValueHDD);
 }
 
 function initializeCharts() {
@@ -715,6 +731,16 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString();
 }
 
+function formatCurrency(amount) {
+    if (!amount || amount === 0) return '$0';
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+    }).format(amount);
+}
+
 function updateEstimatorDropdowns() {
     const estimatorSelect = document.getElementById('estimator');
     const estimatorFilter = document.getElementById('estimatorFilter');
@@ -823,6 +849,7 @@ function populateJobForm(job) {
     document.getElementById('estimator').value = job.estimator || '';
     document.getElementById('deadline').value = job.deadline || '';
     document.getElementById('followUpDate').value = job.followUpDate || '';
+    document.getElementById('bidAmount').value = job.bidAmount || '';
     document.getElementById('status').value = job.status || '';
 }
 
@@ -838,6 +865,7 @@ async function handleJobSubmit(e) {
         estimator: formData.get('estimator') || document.getElementById('estimator').value,
         deadline: formData.get('deadline') || document.getElementById('deadline').value,
         followUpDate: formData.get('followUpDate') || document.getElementById('followUpDate').value || null,
+        bidAmount: parseFloat(formData.get('bidAmount') || document.getElementById('bidAmount').value) || null,
         status: formData.get('status') || document.getElementById('status').value
     };
 
@@ -1109,12 +1137,13 @@ function openExportModal() {
 }
 
 function generateCSV(jobs) {
-    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Deadline', 'Status', 'Company', 'Created At'];
+    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Bid Amount', 'Deadline', 'Status', 'Company', 'Created At'];
     const rows = jobs.map(job => [
         job.projectName,
         job.clientName,
         job.location,
         job.estimator,
+        job.bidAmount || '',
         job.deadline,
         job.status,
         job.company === 'MHC' ? 'MH Construction' : 'High Desert Drywall',

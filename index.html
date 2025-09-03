@@ -174,6 +174,114 @@
         }
 
         /* End of Charts styles */
+
+        /* Footer styles */
+        .footer {
+            background: var(--dark-gray);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer-content {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .footer-logo-icon {
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
+
+        .footer-company-info h4 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .footer-description {
+            font-size: 0.875rem;
+            color: #ddd;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.3s;
+        }
+
+        .footer-link:hover {
+            color: var(--primary-green);
+        }
+
+        .footer-contact {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 0.875rem;
+        }
+
+        .footer-bottom {
+            border-top: 1px solid #333;
+            padding-top: 1rem;
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .footer-copyright {
+            font-size: 0.875rem;
+            color: #bbb;
+        }
+
+        .footer-meta {
+            font-size: 0.75rem;
+            color: #999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .footer-version {
+            margin-right: 0.5rem;
+        }
+
+        .footer-separator {
+            margin: 0 0.25rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            margin-right: 0.25rem;
+        }
+        /* End of Footer styles */
     </style>
     
     <!-- Firebase v8 SDK (compat mode) -->
@@ -345,6 +453,26 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="stat-card">
+                    <div class="stat-header">
+                        <div class="stat-title">Total Bid Value</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="totalBidValueMHC">$0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="totalBidValueHDD">$0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="totalBidValue">$0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -399,6 +527,7 @@
                             <th>Client</th>
                             <th>Location</th>
                             <th>Estimator</th>
+                            <th>Bid Amount</th>
                             <th>Deadline</th>
                             <th>Follow-up</th>
                             <th>Status</th>
@@ -427,6 +556,70 @@
             </div>
         </section>
     </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-logo">
+                    <div class="footer-logo-icon">🪖</div>
+                    <div class="footer-company-info">
+                        <h4>MH Construction</h4>
+                        <p>Professional Construction & Drywall Services</p>
+                    </div>
+                </div>
+                <div class="footer-description">
+                    <p>Leading provider of construction and drywall solutions in Arizona. MH Construction and High Desert Drywall deliver quality craftsmanship and reliable service for commercial and residential projects.</p>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h5>Companies</h5>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link">MH Construction (MHC)</a></li>
+                    <li><a href="#" class="footer-link">High Desert Drywall (HDD)</a></li>
+                    <li><a href="#" class="footer-link">Project Portfolio</a></li>
+                    <li><a href="#" class="footer-link">Service Areas</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h5>Dashboard</h5>
+                <ul class="footer-links">
+                    <li><a href="#" class="footer-link" onclick="openJobModal()">Add New Bid</a></li>
+                    <li><a href="#" class="footer-link" onclick="openEstimatorsModal()">Manage Team</a></li>
+                    <li><a href="#" class="footer-link" onclick="document.getElementById('chartsToggle').click()">View Analytics</a></li>
+                    <li><a href="#" class="footer-link" onclick="openExportModal()">Export Data</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h5>Contact Info</h5>
+                <ul class="footer-contact">
+                    <li>📧 info@mhconstruction.com</li>
+                    <li>📞 (602) 555-0123</li>
+                    <li>📍 Phoenix, Arizona</li>
+                    <li>🕒 Mon-Fri: 7:00 AM - 6:00 PM</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <div class="footer-bottom-content">
+                <div class="footer-copyright">
+                    <p>&copy; 2024 MH Construction. All rights reserved.</p>
+                </div>
+                <div class="footer-meta">
+                    <span class="footer-version">Dashboard v2.1</span>
+                    <span class="footer-separator">•</span>
+                    <span class="footer-status">
+                        <span class="status-indicator"></span>
+                        System Online
+                    </span>
+                </div>
+            </div>
+        </div>
+    </footer>
 
     <!-- Job Modal -->
     <div id="jobModal" class="modal-overlay" style="display: none;">
@@ -471,6 +664,10 @@
                         <div class="form-group">
                             <label for="followUpDate">Follow-up Date</label>
                             <input type="date" id="followUpDate" name="followUpDate">
+                        </div>
+                        <div class="form-group">
+                            <label for="bidAmount">Bid Amount</label>
+                            <input type="number" id="bidAmount" name="bidAmount" step="0.01" min="0" placeholder="Enter bid amount">
                         </div>
                         <div class="form-group">
                             <label for="status">Status *</label>
