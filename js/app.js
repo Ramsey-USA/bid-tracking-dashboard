@@ -491,6 +491,7 @@ function updateCharts() {
     updateStatusChart(jobs);
     updateTrendsChart(jobs);
     updateWorkloadChart(jobs);
+    updateFinancialChart(jobs);
 }
 
 function updateStatusChart(jobs) {
@@ -634,8 +635,12 @@ function updateWorkloadChart(jobs) {
     if (!ctx) return;
 
     const estimatorCounts = {};
+    const estimatorValues = {};
+    
     jobs.forEach(job => {
-        estimatorCounts[job.estimator] = (estimatorCounts[job.estimator] || 0) + 1;
+        const estimator = job.estimator || 'Unassigned';
+        estimatorCounts[estimator] = (estimatorCounts[estimator] || 0) + 1;
+        estimatorValues[estimator] = (estimatorValues[estimator] || 0) + (job.bidAmount || 0);
     });
 
     if (charts.workloadChart) {
@@ -643,7 +648,8 @@ function updateWorkloadChart(jobs) {
     }
 
     const labels = Object.keys(estimatorCounts);
-    const data = Object.values(estimatorCounts);
+    const jobCounts = Object.values(estimatorCounts);
+    const bidValues = Object.values(estimatorValues);
 
     charts.workloadChart = new Chart(ctx, {
         type: 'bar',
@@ -651,9 +657,142 @@ function updateWorkloadChart(jobs) {
             labels: labels,
             datasets: [{
                 label: 'Jobs Assigned',
-                data: data,
+                data: jobCounts,
                 backgroundColor: '#2196F3',
                 borderColor: '#1976D2',
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y'
+            }, {
+                label: 'Total Bid Value',
+                data: bidValues.map(value => value / 1000),
+                backgroundColor: '#4CAF50',
+                borderColor: '#388E3C',
+                borderWidth: 1,
+                borderRadius: 4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Workload & Value by Estimator',
+                    font: {
+                        size: 16,
+                        weight: 'bold'
+                    }
+                },
+                legend: {
+                    position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            if (context.datasetIndex === 1) {
+                                return context.dataset.label + ': $' + (context.parsed.y * 1000).toLocaleString();
+                            }
+                            return context.dataset.label + ': ' + context.parsed.y;
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    },
+                    title: {
+                        display: true,
+                        text: 'Number of Jobs'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Bid Value (Thousands $)'
+                    },
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Estimators'
+                    }
+                }
+            }
+        }
+    });
+}
+
+// Add new financial breakdown chart
+function updateFinancialChart(jobs) {
+    const ctx = document.getElementById('bidAccuracyChart');
+    if (!ctx) return;
+
+    const companyData = {
+        MHC: { estimating: 0, bond: 0, bid: 0, count: 0 },
+        HDD: { estimating: 0, bond: 0, bid: 0, count: 0 }
+    };
+
+    jobs.forEach(job => {
+        const company = job.company || 'Unknown';
+        if (companyData[company]) {
+            companyData[company].estimating += job.estimatingCost || 0;
+            companyData[company].bond += job.bondAmount || 0;
+            companyData[company].bid += job.bidAmount || 0;
+            companyData[company].count += 1;
+        }
+    });
+
+    if (charts.bidAccuracyChart) {
+        charts.bidAccuracyChart.destroy();
+    }
+
+    const labels = ['MH Construction', 'High Desert Drywall'];
+    const estimatingData = [companyData.MHC.estimating / 1000, companyData.HDD.estimating / 1000];
+    const bondData = [companyData.MHC.bond / 1000, companyData.HDD.bond / 1000];
+    const bidData = [companyData.MHC.bid / 1000, companyData.HDD.bid / 1000];
+
+    charts.bidAccuracyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Estimating Cost',
+                data: estimatingData,
+                backgroundColor: '#FF9800',
+                borderColor: '#F57C00',
+                borderWidth: 1,
+                borderRadius: 4
+            }, {
+                label: 'Bond Amount',
+                data: bondData,
+                backgroundColor: '#9C27B0',
+                borderColor: '#7B1FA2',
+                borderWidth: 1,
+                borderRadius: 4
+            }, {
+                label: 'Bid Amount',
+                data: bidData,
+                backgroundColor: '#4CAF50',
+                borderColor: '#388E3C',
                 borderWidth: 1,
                 borderRadius: 4
             }]
@@ -664,7 +803,7 @@ function updateWorkloadChart(jobs) {
             plugins: {
                 title: {
                     display: true,
-                    text: 'Workload by Estimator',
+                    text: 'Financial Breakdown by Company',
                     font: {
                         size: 16,
                         weight: 'bold'
@@ -672,23 +811,27 @@ function updateWorkloadChart(jobs) {
                 },
                 legend: {
                     position: 'bottom'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': $' + (context.parsed.y * 1000).toLocaleString();
+                        }
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        stepSize: 1
-                    },
                     title: {
                         display: true,
-                        text: 'Number of Jobs'
+                        text: 'Amount (Thousands $)'
                     }
                 },
                 x: {
                     title: {
                         display: true,
-                        text: 'Estimators'
+                        text: 'Companies'
                     }
                 }
             }
