@@ -21,6 +21,7 @@ class BidTrackingApp {
             
             // First setup event listeners
             this.setupEventListeners();
+            this.setupViewToggle();
             
             // Then initialize Firebase components
             await window.AuthComponent.init();
@@ -30,6 +31,32 @@ class BidTrackingApp {
             console.log('✅ App initialized successfully');
         } catch (error) {
             console.error('❌ App initialization failed:', error);
+        }
+    }
+
+    setupViewToggle() {
+        const tableViewBtn = document.getElementById('tableViewBtn');
+        const cardViewBtn = document.getElementById('cardViewBtn');
+        const tableView = document.getElementById('tableView');
+        const cardView = document.getElementById('cardView');
+        
+        if (tableViewBtn && cardViewBtn && tableView && cardView) {
+            tableViewBtn.addEventListener('click', () => {
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+                tableView.style.display = 'block';
+                cardView.style.display = 'none';
+            });
+            
+            cardViewBtn.addEventListener('click', () => {
+                cardViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+                tableView.style.display = 'none';
+                cardView.style.display = 'block';
+            });
+            console.log('✅ View toggle setup complete');
+        } else {
+            console.error('❌ View toggle elements not found');
         }
     }
 
@@ -220,7 +247,7 @@ class BidTrackingApp {
         const job = this.jobs.find(j => j.id === jobId);
         if (!job) return;
 
-        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description'];
+        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
         fields.forEach(field => {
             const element = document.getElementById(field);
             if (element) element.value = job[field] || '';
@@ -229,7 +256,7 @@ class BidTrackingApp {
 
     async saveJob() {
         const jobData = {};
-        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description'];
+        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
         
         fields.forEach(field => {
             const element = document.getElementById(field);
@@ -257,31 +284,93 @@ class BidTrackingApp {
 
     renderJobs() {
         const tbody = document.getElementById('jobsTableBody');
+        const cardsGrid = document.getElementById('jobsCardsGrid');
         const emptyState = document.getElementById('emptyState');
         
-        if (!tbody || !emptyState) return;
+        if (!tbody) return;
 
         if (this.jobs.length === 0) {
             tbody.innerHTML = '';
-            emptyState.style.display = 'block';
+            if (cardsGrid) cardsGrid.innerHTML = '';
+            if (emptyState) emptyState.style.display = 'block';
             return;
         }
         
-        emptyState.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
+        
+        // Populate table view
         tbody.innerHTML = this.jobs.map(job => `
             <tr>
                 <td>${job.projectName || 'N/A'}</td>
                 <td>${job.clientName || 'N/A'}</td>
                 <td>${job.location || 'N/A'}</td>
                 <td>${this.getEstimatorName(job.estimator) || 'N/A'}</td>
-                <td>${job.deadline || 'N/A'}</td>
-                <td><span class="status-badge">${job.status || 'N/A'}</span></td>
+                <td>${this.formatDate(job.deadline) || 'N/A'}</td>
+                <td><span class="status-badge status-${this.getStatusBadgeClass(job.status)}">${job.status || 'N/A'}</span></td>
                 <td>
-                    <button class="btn btn-sm btn-outline" onclick="window.app.openJobModal('${job.id}')">Edit</button>
-                    <button class="btn btn-sm btn-danger" onclick="window.app.deleteJob('${job.id}')">Delete</button>
+                    <div class="action-buttons">
+                        <button class="btn btn-sm btn-outline" onclick="window.app.openJobModal('${job.id}')">✏️ Edit</button>
+                        <button class="btn btn-sm btn-danger" onclick="window.app.deleteJob('${job.id}')">🗑️ Delete</button>
+                    </div>
                 </td>
             </tr>
         `).join('');
+
+        // Populate card view
+        if (cardsGrid) {
+            cardsGrid.innerHTML = this.jobs.map(job => `
+                <div class="job-card">
+                    <div class="job-card-header">
+                        <div>
+                            <div class="job-card-title">${job.projectName || 'N/A'}</div>
+                            <div class="job-card-client">${job.clientName || 'N/A'}</div>
+                        </div>
+                        <span class="status-badge status-${this.getStatusBadgeClass(job.status)}">${job.status || 'N/A'}</span>
+                    </div>
+                    <div class="job-card-details">
+                        <div class="job-card-detail">
+                            <span class="detail-icon">📍</span>
+                            <span>${job.location || 'N/A'}</span>
+                        </div>
+                        <div class="job-card-detail">
+                            <span class="detail-icon">👤</span>
+                            <span>${this.getEstimatorName(job.estimator) || 'N/A'}</span>
+                        </div>
+                        <div class="job-card-detail">
+                            <span class="detail-icon">📅</span>
+                            <span>Due: ${this.formatDate(job.deadline) || 'N/A'}</span>
+                        </div>
+                        ${job.followUpDate ? `
+                        <div class="job-card-detail">
+                            <span class="detail-icon">🔔</span>
+                            <span>Follow up: ${this.formatDate(job.followUpDate)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="job-card-footer">
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-outline" onclick="window.app.openJobModal('${job.id}')">✏️ Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.app.deleteJob('${job.id}')">🗑️ Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    getStatusBadgeClass(status) {
+        if (!status) return '';
+        return status.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric' 
+        });
     }
 
     getEstimatorName(estimatorId) {
