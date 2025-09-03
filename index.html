@@ -134,6 +134,46 @@
         .auth-link:hover {
             text-decoration: underline;
         }
+
+        /* Charts styles */
+        .charts-container {
+            margin: 2rem 0;
+            text-align: center;
+        }
+
+        .charts-toggle-btn {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .charts-toggle-btn:hover {
+            background: var(--primary-green-dark);
+        }
+
+        .charts-section {
+            margin-top: 1.5rem;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        /* End of Charts styles */
     </style>
     
     <!-- Firebase v8 SDK (compat mode) -->
@@ -147,6 +187,7 @@
     <script src="js/firebase-service.js"></script>
     <script src="js/auth-component.js"></script>
     <script src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -154,8 +195,14 @@
         <header class="header">
             <div class="header-content">
                 <div class="logo-section">
-                    <h1 class="logo">MH Construction</h1>
-                    <span class="subtitle">Bid Tracking Dashboard</span>
+                    <div class="company-logo">
+                        <div class="logo-icon">👷</div>
+                        <div class="company-info">
+                            <div class="company-name">MH Construction & High Desert Drywall</div>
+                            <div class="logo">Bid Tracking Dashboard</div>
+                            <div class="subtitle">Professional Construction Management</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="header-actions">
                     <button id="addJobBtn" class="btn btn-primary">
@@ -170,13 +217,31 @@
                         <span class="btn-icon">📊</span>
                         Export Data
                     </button>
-                    <button id="signOutBtn" class="btn btn-outline">
+                    <button id="signOutBtn" class="btn btn-secondary">
                         <span class="btn-icon">🚪</span>
                         Sign Out
                     </button>
                 </div>
             </div>
         </header>
+
+        <!-- Charts Section -->
+        <div class="charts-container">
+            <button id="chartsToggle" class="charts-toggle-btn">📊 Show Charts</button>
+            <div id="chartsSection" class="charts-section" style="display: none;">
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="trendsChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="workloadChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <!-- Statistics Dashboard -->
         <section class="stats-section">
@@ -305,7 +370,7 @@
                             <input type="text" id="location" required>
                         </div>
                         <div class="form-group">
-                            <label for="estimator">Assigned Estimator *</label>
+                            <label for="estimator">Estimator *</label>
                             <select id="estimator" required>
                                 <option value="">Select Estimator</option>
                             </select>
@@ -327,121 +392,91 @@
                                 <option value="No Bid">No Bid</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label for="followUpDate">Follow Up Date</label>
-                            <input type="date" id="followUpDate">
-                        </div>
                     </div>
-                    <div class="form-group full-width">
-                        <label for="description">Project Description</label>
-                        <textarea id="description" rows="3" placeholder="Enter project details..."></textarea>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" id="saveJobBtn">Save Job</button>
+                        <button type="button" class="btn btn-secondary" id="cancelJobBtn">Cancel</button>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline modal-close">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="saveJob()">Save Job</button>
-            </div>
         </div>
     </div>
 
-    <!-- Export Modal -->
-    <div id="exportModal" class="modal-overlay">
-        <div class="modal modal-small">
-            <div class="modal-header">
-                <h2>Export Data</h2>
-                <button class="modal-close" type="button">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="export-options">
-                    <h3>Export Format</h3>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="exportFormat" value="csv" checked>
-                            <span>Excel (CSV)</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="exportFormat" value="pdf">
-                            <span>PDF Report</span>
-                        </label>
-                    </div>
-                    
-                    <h3>Data Selection</h3>
-                    <div class="radio-group">
-                        <label class="radio-option">
-                            <input type="radio" name="exportData" value="filtered" checked>
-                            <span>Current Filtered Results</span>
-                        </label>
-                        <label class="radio-option">
-                            <input type="radio" name="exportData" value="all">
-                            <span>All Data</span>
-                        </label>
-                    </div>
+    <!-- Auth Container -->
+    <div class="auth-container" id="authContainer">
+        <div class="auth-overlay">
+            <div class="auth-modal">
+                <div class="auth-header">
+                    <h2>Welcome to MH Construction</h2>
+                    <p>Sign in to continue</p>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline modal-close">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="performExport()">Export</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Estimator Management Modal -->
-    <div id="estimatorModal" class="modal-overlay">
-        <div class="modal modal-large">
-            <div class="modal-header">
-                <h2>Manage Estimators</h2>
-                <button class="modal-close" onclick="closeEstimatorModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <div class="estimator-management">
-                    <div class="estimator-form-section">
-                        <h3 id="estimatorFormTitle">Add New Estimator</h3>
-                        <form id="estimatorForm" class="estimator-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="estimatorName">Full Name *</label>
-                                    <input type="text" id="estimatorName" required>
-                                </div>
-                                <div class="form-group">
-                                    <label for="estimatorEmail">Email</label>
-                                    <input type="email" id="estimatorEmail">
-                                </div>
-                                <div class="form-group">
-                                    <label for="estimatorPhone">Phone</label>
-                                    <input type="tel" id="estimatorPhone">
-                                </div>
-                                <div class="form-group">
-                                    <label for="estimatorSpecialty">Specialty</label>
-                                    <select id="estimatorSpecialty">
-                                        <option value="">Select Specialty</option>
-                                        <option value="Commercial">Commercial</option>
-                                        <option value="Residential">Residential</option>
-                                        <option value="Industrial">Industrial</option>
-                                        <option value="Civil">Civil</option>
-                                        <option value="General">General</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" class="btn btn-outline" onclick="cancelEstimatorEdit()">Cancel</button>
-                                <button type="submit" class="btn btn-primary">Save Estimator</button>
-                            </div>
-                        </form>
-                    </div>
-                    
-                    <div class="estimator-list-section">
-                        <h3>Current Estimators</h3>
-                        <div class="estimator-list" id="estimatorList">
-                            <!-- Estimators will be populated here -->
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="loginTab">Login</button>
+                    <button class="auth-tab" id="signupTab">Sign Up</button>
+                </div>
+                <form id="authForm" class="auth-form">
+                    <!-- Login Form -->
+                    <div id="loginForm" class="auth-form-content">
+                        <div class="form-group">
+                            <label for="loginEmail">Email *</label>
+                            <input type="email" id="loginEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="loginPassword">Password *</label>
+                            <input type="password" id="loginPassword" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="loginBtn">Login</button>
+                        </div>
+                        <div class="auth-footer">
+                            <p>Don't have an account? <a href="#" class="auth-link" id="showSignupLink">Sign up here</a></p>
                         </div>
                     </div>
-                </div>
+
+                    <!-- Sign Up Form -->
+                    <div id="signupForm" class="auth-form-content" style="display: none;">
+                        <div class="form-group">
+                            <label for="signupName">Full Name *</label>
+                            <input type="text" id="signupName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupEmail">Email *</label>
+                            <input type="email" id="signupEmail" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="signupPassword">Password *</label>
+                            <input type="password" id="signupPassword" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmPassword">Confirm Password *</label>
+                            <input type="password" id="confirmPassword" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary" id="signupBtn">Sign Up</button>
+                        </div>
+                        <div class="auth-footer">
+                            <p>Already have an account? <a href="#" class="auth-link" id="showLoginLink">Login here</a></p>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
+
+    <!-- Scripts -->
     <script>
-        console.log('Dashboard loaded');
+        // Initialize Firebase (add your own config here)
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-YourAPIKeyHere",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "1:your-app-id:web:your-web-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
     </script>
 </body>
 </html>

@@ -6,6 +6,7 @@ class BidTrackingApp {
         this.estimators = [];
         this.currentEditingJobId = null;
         this.currentEditingEstimatorId = null;
+        this.charts = {}; // Store chart instances
         
         // Wait for DOM to be ready before initializing
         if (document.readyState === 'loading') {
@@ -22,6 +23,7 @@ class BidTrackingApp {
             // First setup event listeners
             this.setupEventListeners();
             this.setupViewToggle();
+            this.setupChartsToggle();
             
             // Then initialize Firebase components
             await window.AuthComponent.init();
@@ -57,6 +59,25 @@ class BidTrackingApp {
             console.log('✅ View toggle setup complete');
         } else {
             console.error('❌ View toggle elements not found');
+        }
+    }
+
+    setupChartsToggle() {
+        const chartsToggle = document.getElementById('chartsToggle');
+        const chartsSection = document.getElementById('chartsSection');
+        
+        if (chartsToggle && chartsSection) {
+            chartsToggle.addEventListener('click', () => {
+                const isCollapsed = chartsSection.style.display === 'none';
+                chartsSection.style.display = isCollapsed ? 'block' : 'none';
+                chartsToggle.textContent = isCollapsed ? '📊 Hide Charts' : '📊 Show Charts';
+                
+                if (isCollapsed) {
+                    // Initialize charts when shown for the first time
+                    setTimeout(() => this.initializeCharts(), 100);
+                }
+            });
+            console.log('✅ Charts toggle setup complete');
         }
     }
 
@@ -106,6 +127,7 @@ class BidTrackingApp {
         }
         this.renderJobs();
         this.updateStats();
+        this.updateCharts();
     }
 
     setupEventListeners() {
@@ -509,6 +531,189 @@ class BidTrackingApp {
                 alert('Failed to delete estimator.');
             }
         }
+    }
+
+    initializeCharts() {
+        this.renderStatusChart();
+        this.renderTrendsChart();
+        this.renderWorkloadChart();
+    }
+
+    updateCharts() {
+        // Only update if charts are visible
+        const chartsSection = document.getElementById('chartsSection');
+        if (chartsSection && chartsSection.style.display !== 'none') {
+            this.renderStatusChart();
+            this.renderTrendsChart();
+            this.renderWorkloadChart();
+        }
+    }
+
+    renderStatusChart() {
+        const ctx = document.getElementById('statusChart');
+        if (!ctx) return;
+
+        // Destroy existing chart
+        if (this.charts.status) {
+            this.charts.status.destroy();
+        }
+
+        const statusCounts = {};
+        this.jobs.forEach(job => {
+            const status = job.status || 'No Status';
+            statusCounts[status] = (statusCounts[status] || 0) + 1;
+        });
+
+        const labels = Object.keys(statusCounts);
+        const data = Object.values(statusCounts);
+        const colors = [
+            '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6', '#F97316'
+        ];
+
+        this.charts.status = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: colors.slice(0, labels.length),
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Job Status Distribution'
+                    }
+                }
+            }
+        });
+    }
+
+    renderTrendsChart() {
+        const ctx = document.getElementById('trendsChart');
+        if (!ctx) return;
+
+        // Destroy existing chart
+        if (this.charts.trends) {
+            this.charts.trends.destroy();
+        }
+
+        // Group jobs by month
+        const monthlyData = {};
+        this.jobs.forEach(job => {
+            if (job.deadline) {
+                const date = new Date(job.deadline);
+                const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+            }
+        });
+
+        // Sort months and get last 6 months
+        const sortedMonths = Object.keys(monthlyData).sort().slice(-6);
+        const labels = sortedMonths.map(month => {
+            const [year, monthNum] = month.split('-');
+            const date = new Date(year, monthNum - 1);
+            return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+        });
+        const data = sortedMonths.map(month => monthlyData[month] || 0);
+
+        this.charts.trends = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jobs Due',
+                    data: data,
+                    borderColor: '#3B82F6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Monthly Job Trends'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    renderWorkloadChart() {
+        const ctx = document.getElementById('workloadChart');
+        if (!ctx) return;
+
+        // Destroy existing chart
+        if (this.charts.workload) {
+            this.charts.workload.destroy();
+        }
+
+        const estimatorWorkload = {};
+        this.estimators.forEach(estimator => {
+            estimatorWorkload[estimator.name] = 0;
+        });
+
+        this.jobs.forEach(job => {
+            const estimatorName = this.getEstimatorName(job.estimator);
+            if (estimatorName && estimatorName !== job.estimator) {
+                estimatorWorkload[estimatorName] = (estimatorWorkload[estimatorName] || 0) + 1;
+            }
+        });
+
+        const labels = Object.keys(estimatorWorkload);
+        const data = Object.values(estimatorWorkload);
+
+        this.charts.workload = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Jobs Assigned',
+                    data: data,
+                    backgroundColor: '#10B981',
+                    borderColor: '#059669',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Estimator Workload'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                }
+            }
+        });
     }
 }
 
