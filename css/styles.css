@@ -442,6 +442,17 @@ body {
     font-weight: 500;
 }
 
+.job-card-description {
+    background: var(--lighter-gray);
+    padding: 1rem;
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+    font-style: italic;
+}
+
 .job-card-details {
     display: grid;
     gap: 1rem;
@@ -839,4 +850,29 @@ body {
     .modal-footer {
         padding: 1.25rem;
     }
+}
+
+/* Company Tag Styles */
+.company-tag {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    margin-right: 0.5rem;
+    margin-bottom: 0.25rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.company-mhc {
+    background: #e8f5e8;
+    color: #2e7d32;
+    border: 1px solid #4caf50;
+}
+
+.company-hdd {
+    background: #fff3e0;
+    color: #ef6c00;
+    border: 1px solid #ff9800;
 }

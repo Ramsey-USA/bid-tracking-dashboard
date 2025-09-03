@@ -208,6 +208,11 @@
                     <span class="search-icon">🔍</span>
                 </div>
                 <div class="filter-group">
+                    <select id="companyFilter" class="filter-select">
+                        <option value="">All Companies</option>
+                        <option value="MHC">MH Construction (MHC)</option>
+                        <option value="HDD">High Desert Drywall (HDD)</option>
+                    </select>
                     <select id="statusFilter" class="filter-select">
                         <option value="">All Status</option>
                         <option value="In Progress">In Progress</option>
@@ -279,6 +284,14 @@
             <div class="modal-body">
                 <form id="jobForm">
                     <div class="form-grid">
+                        <div class="form-group">
+                            <label for="company">Company *</label>
+                            <select id="company" required>
+                                <option value="">Select Company</option>
+                                <option value="MHC">MH Construction (MHC)</option>
+                                <option value="HDD">High Desert Drywall (HDD)</option>
+                            </select>
+                        </div>
                         <div class="form-group">
                             <label for="projectName">Project Name *</label>
                             <input type="text" id="projectName" required>

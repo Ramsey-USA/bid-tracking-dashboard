@@ -247,7 +247,7 @@ class BidTrackingApp {
         const job = this.jobs.find(j => j.id === jobId);
         if (!job) return;
 
-        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
+        const fields = ['company', 'projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
         fields.forEach(field => {
             const element = document.getElementById(field);
             if (element) element.value = job[field] || '';
@@ -256,14 +256,14 @@ class BidTrackingApp {
 
     async saveJob() {
         const jobData = {};
-        const fields = ['projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
+        const fields = ['company', 'projectName', 'clientName', 'location', 'estimator', 'deadline', 'status', 'description', 'followUpDate'];
         
         fields.forEach(field => {
             const element = document.getElementById(field);
             if (element) jobData[field] = element.value.trim();
         });
 
-        if (!jobData.projectName || !jobData.clientName) {
+        if (!jobData.company || !jobData.projectName || !jobData.clientName) {
             alert('Please fill in required fields.');
             return;
         }
@@ -298,10 +298,13 @@ class BidTrackingApp {
         
         if (emptyState) emptyState.style.display = 'none';
         
-        // Populate table view
+        // Populate table view (unchanged)
         tbody.innerHTML = this.jobs.map(job => `
             <tr>
-                <td>${job.projectName || 'N/A'}</td>
+                <td>
+                    ${job.company ? `<span class="company-tag company-${job.company.toLowerCase()}">${job.company}</span>` : ''}
+                    ${job.projectName || 'N/A'}
+                </td>
                 <td>${job.clientName || 'N/A'}</td>
                 <td>${job.location || 'N/A'}</td>
                 <td>${this.getEstimatorName(job.estimator) || 'N/A'}</td>
@@ -316,17 +319,23 @@ class BidTrackingApp {
             </tr>
         `).join('');
 
-        // Populate card view
+        // Populate card view (with description)
         if (cardsGrid) {
             cardsGrid.innerHTML = this.jobs.map(job => `
                 <div class="job-card">
                     <div class="job-card-header">
                         <div>
+                            ${job.company ? `<span class="company-tag company-${job.company.toLowerCase()}">${job.company}</span>` : ''}
                             <div class="job-card-title">${job.projectName || 'N/A'}</div>
                             <div class="job-card-client">${job.clientName || 'N/A'}</div>
                         </div>
                         <span class="status-badge status-${this.getStatusBadgeClass(job.status)}">${job.status || 'N/A'}</span>
                     </div>
+                    ${job.description ? `
+                    <div class="job-card-description">
+                        ${this.truncateText(job.description)}
+                    </div>
+                    ` : ''}
                     <div class="job-card-details">
                         <div class="job-card-detail">
                             <span class="detail-icon">📍</span>
@@ -371,6 +380,12 @@ class BidTrackingApp {
             month: 'short', 
             day: 'numeric' 
         });
+    }
+
+    truncateText(text, maxLength = 80) {
+        if (!text) return '';
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength).trim() + '...';
     }
 
     getEstimatorName(estimatorId) {
