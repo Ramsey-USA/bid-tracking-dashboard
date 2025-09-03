@@ -200,7 +200,21 @@ function displayJobs(jobsToDisplay = null) {
         // Format bid amount
         const bidAmountFormatted = job.bidAmount ? formatCurrency(job.bidAmount) : '<span class="text-muted">Not set</span>';
         
+        // Format actual cost with accuracy indicator
+        let actualCostFormatted = '<span class="text-muted">Pending</span>';
+        let accuracyIndicator = '';
+        
+        if (job.actualCost && job.bidAmount) {
+            actualCostFormatted = formatCurrency(job.actualCost);
+            const accuracy = ((job.bidAmount - Math.abs(job.bidAmount - job.actualCost)) / job.bidAmount) * 100;
+            const isOverBudget = job.actualCost > job.bidAmount;
+            accuracyIndicator = `<div class="accuracy-indicator ${isOverBudget ? 'over-budget' : 'under-budget'}" title="Accuracy: ${accuracy.toFixed(1)}%">
+                ${isOverBudget ? '🔺' : '🔻'} ${accuracy.toFixed(1)}%
+            </div>`;
+        }
+        
         const row = tableBody.insertRow();
+        row.className = job.company === 'MHC' ? 'mhc-row' : 'hdd-row';
         row.innerHTML = `
             <td>
                 <div class="project-cell">
@@ -213,6 +227,12 @@ function displayJobs(jobsToDisplay = null) {
             <td>${job.location}</td>
             <td>${job.estimator}</td>
             <td><strong>${bidAmountFormatted}</strong></td>
+            <td>
+                <div class="cost-cell">
+                    <strong>${actualCostFormatted}</strong>
+                    ${accuracyIndicator}
+                </div>
+            </td>
             <td class="${isOverdue ? 'overdue' : ''}">${formatDate(job.deadline)}</td>
             <td>${job.followUpDate ? formatDate(job.followUpDate) : '<span class="text-muted">None set</span>'}</td>
             <td><span class="status-badge status-${job.status.toLowerCase().replace(/\s+/g, '-')}">${job.status}</span></td>
@@ -238,6 +258,10 @@ function displayJobs(jobsToDisplay = null) {
                 <p><strong>Location:</strong> ${job.location}</p>
                 <p><strong>Estimator:</strong> ${job.estimator}</p>
                 <p><strong>Bid Amount:</strong> <span class="bid-amount">${bidAmountFormatted}</span></p>
+                <p><strong>Actual Cost:</strong> 
+                    <span class="actual-cost">${actualCostFormatted}</span>
+                    ${accuracyIndicator}
+                </p>
                 <p><strong>Deadline:</strong> <span class="${isOverdue ? 'overdue-text' : ''}">${formatDate(job.deadline)}</span></p>
                 <p><strong>Follow-up:</strong> ${job.followUpDate ? 
                     `<span class="${followUpNeeded ? 'follow-up-needed' : ''}">${formatDate(job.followUpDate)}</span>` : 
@@ -1137,18 +1161,28 @@ function openExportModal() {
 }
 
 function generateCSV(jobs) {
-    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Bid Amount', 'Deadline', 'Status', 'Company', 'Created At'];
-    const rows = jobs.map(job => [
-        job.projectName,
-        job.clientName,
-        job.location,
-        job.estimator,
-        job.bidAmount || '',
-        job.deadline,
-        job.status,
-        job.company === 'MHC' ? 'MH Construction' : 'High Desert Drywall',
-        job.createdAt || ''
-    ]);
+    const headers = ['Project Name', 'Client', 'Location', 'Estimator', 'Bid Amount', 'Actual Cost', 'Accuracy', 'Deadline', 'Status', 'Company', 'Created At'];
+    const rows = jobs.map(job => {
+        let accuracy = 'N/A';
+        if (job.bidAmount && job.actualCost) {
+            const acc = ((job.bidAmount - Math.abs(job.bidAmount - job.actualCost)) / job.bidAmount) * 100;
+            accuracy = `${acc.toFixed(1)}%`;
+        }
+        
+        return [
+            job.projectName,
+            job.clientName,
+            job.location,
+            job.estimator,
+            job.bidAmount || '',
+            job.actualCost || '',
+            accuracy,
+            job.deadline,
+            job.status,
+            job.company === 'MHC' ? 'MH Construction' : 'High Desert Drywall',
+            job.createdAt || ''
+        ];
+    });
     
     const csvContent = [headers, ...rows]
         .map(row => row.map(field => `"${field}"`).join(','))

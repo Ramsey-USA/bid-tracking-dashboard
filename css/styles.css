@@ -250,8 +250,8 @@ body {
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.25rem;
 }
 
 .stat-card {
@@ -337,33 +337,72 @@ body {
     letter-spacing: 0.01em;
 }
 
-/* Special styling for bid value card */
+/* Special styling for bid value card - make it slightly larger */
+.stat-card:last-child {
+    padding: 1.75rem 1.5rem;
+    min-width: 280px; /* Reduced from 320px */
+}
+
 .stat-card:last-child .stat-number-small {
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    line-height: 1.3;
 }
 
 .stat-card:last-child .stat-number {
-    font-size: 2rem;
+    font-size: 1.9rem;
     font-weight: 700;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     line-height: 1.1;
+    letter-spacing: -0.5px;
+    margin-bottom: 0.75rem;
 }
 
 .stat-card:last-child .stat-company {
-    min-height: 40px;
+    min-height: 48px;
     align-items: center;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.5rem;
 }
 
-/* Enhanced stats grid for 6 cards */
+.stat-card:last-child .stat-total {
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+.stat-card:last-child .stat-breakdown {
+    gap: 0.6rem;
+}
+
+/* Enhanced stats grid to accommodate larger bid value card */
 @media (min-width: 1200px) {
     .stats-grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(5, 1fr) 1.15fr; /* Reduced from 1.2fr to 1.15fr */
+        gap: 1rem; /* Tighter gap for better fit */
+    }
+}
+
+@media (min-width: 1400px) {
+    .stats-grid {
+        grid-template-columns: repeat(5, 1fr) 1.2fr;
+        gap: 1.25rem; /* Slightly more space on very large screens */
+    }
+}
+
+@media (min-width: 1000px) and (max-width: 1199px) {
+    .stats-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+    }
+    
+    .stat-card:last-child {
+        min-width: auto;
+        padding: 1.5rem;
     }
 }
 
@@ -377,36 +416,50 @@ body {
         padding: 1.25rem;
     }
     
-    .stat-number {
-        font-size: 2rem;
-    }
-    
-    .stat-number-small {
-        font-size: 1.1rem;
-    }
-    
     /* Adjust bid value card for mobile */
+    .stat-card:last-child {
+        padding: 1.5rem 1.25rem;
+        min-width: auto; /* Reset min-width on mobile */
+    }
+    
     .stat-card:last-child .stat-number {
         font-size: 1.6rem;
+        letter-spacing: -0.3px;
     }
     
     .stat-card:last-child .stat-number-small {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+    }
+    
+    .stat-card:last-child .stat-company {
+        min-height: 42px;
+        padding: 0.5rem 0.6rem;
     }
 }
 
 @media (max-width: 480px) {
     .stats-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
     }
     
     /* Further adjust bid value card for small screens */
+    .stat-card:last-child {
+        padding: 1.25rem 1rem;
+    }
+    
     .stat-card:last-child .stat-number {
         font-size: 1.4rem;
+        letter-spacing: -0.2px;
     }
     
     .stat-card:last-child .stat-number-small {
         font-size: 0.8rem;
+    }
+    
+    .stat-card:last-child .stat-company {
+        min-height: 40px;
+        padding: 0.4rem 0.5rem;
     }
 }
 
@@ -1404,6 +1457,20 @@ body {
     
     .form-row {
         grid-template-columns: 1fr;
+    }
+}
+
+/* Charts grid for 4 charts */
+.charts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 1200px) {
+    .charts-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 

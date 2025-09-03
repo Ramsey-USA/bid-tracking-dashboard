@@ -335,7 +335,7 @@
 
         <!-- Charts Section -->
         <div class="charts-container">
-            <button id="chartsToggle" class="charts-toggle-btn">📊 Show Charts</button>
+            <button id="chartsToggle" class="charts-toggle-btn">📊 Show Analytics</button>
             <div id="chartsSection" class="charts-section" style="display: none;">
                 <div class="charts-grid">
                     <div class="chart-card">
@@ -346,6 +346,9 @@
                     </div>
                     <div class="chart-card">
                         <canvas id="workloadChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <canvas id="bidAccuracyChart"></canvas>
                     </div>
                 </div>
             </div>
@@ -528,6 +531,7 @@
                             <th>Location</th>
                             <th>Estimator</th>
                             <th>Bid Amount</th>
+                            <th>Actual Cost</th>
                             <th>Deadline</th>
                             <th>Follow-up</th>
                             <th>Status</th>
@@ -670,6 +674,15 @@
                             <input type="number" id="bidAmount" name="bidAmount" step="0.01" min="0" placeholder="Enter bid amount">
                         </div>
                         <div class="form-group">
+                            <label for="actualCost">Actual Cost</label>
+                            <input type="number" id="actualCost" name="actualCost" step="0.01" min="0" placeholder="Enter actual project cost">
+                            <small class="form-help">Only fill this after project completion</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="bidNumber">Bid Number</label>
+                            <input type="text" id="bidNumber" name="bidNumber" placeholder="e.g., MHC-2024-001">
+                        </div>
+                        <div class="form-group">
                             <label for="status">Status *</label>
                             <select id="status" name="status" required>
                                 <option value="">Select Status</option>
@@ -771,4 +784,22 @@
 </body>
 </html>
 </body>
+</html>
+</html>
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-YourAPIKeyHere",
+            authDomain: "your-project-id.firebaseapp.com",
+            projectId: "your-project-id",
+            storageBucket: "your-project-id.appspot.com",
+            messagingSenderId: "your-messaging-sender-id",
+            appId: "1:your-app-id:web:your-web-app-id"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+</body>
+</html>
+</body>
+</html>
 </html>
