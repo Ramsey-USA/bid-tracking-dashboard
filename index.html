@@ -196,11 +196,11 @@
             <div class="header-content">
                 <div class="logo-section">
                     <div class="company-logo">
-                        <div class="logo-icon">👷</div>
+                        <div class="logo-icon">🪖</div>
                         <div class="company-info">
-                            <div class="company-name">MH Construction & High Desert Drywall</div>
+                            <div class="company-name">MH Construction</div>
                             <div class="logo">Bid Tracking Dashboard</div>
-                            <div class="subtitle">Professional Construction Management</div>
+                            <div class="subtitle">Managing MHC & High Desert Drywall Projects</div>
                         </div>
                     </div>
                 </div>
@@ -247,20 +247,103 @@
         <section class="stats-section">
             <div class="stats-grid">
                 <div class="stat-card">
-                    <div class="stat-number" id="totalJobs">0</div>
-                    <div class="stat-label">Total Jobs</div>
+                    <div class="stat-header">
+                        <div class="stat-title">Total Jobs</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="totalJobsMHC">0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="totalJobsHDD">0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="totalJobs">0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-number" id="inProgressJobs">0</div>
-                    <div class="stat-label">In Progress</div>
+                    <div class="stat-header">
+                        <div class="stat-title">In Progress</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="inProgressJobsMHC">0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="inProgressJobsHDD">0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="inProgressJobs">0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-number" id="submittedJobs">0</div>
-                    <div class="stat-label">Submitted</div>
+                    <div class="stat-header">
+                        <div class="stat-title">Submitted</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="submittedJobsMHC">0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="submittedJobsHDD">0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="submittedJobs">0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
                 </div>
+                
                 <div class="stat-card">
-                    <div class="stat-number" id="overdueJobs">0</div>
-                    <div class="stat-label">Overdue</div>
+                    <div class="stat-header">
+                        <div class="stat-title">Overdue</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="overdueJobsMHC">0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="overdueJobsHDD">0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="overdueJobs">0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stat-card follow-up-card">
+                    <div class="stat-header">
+                        <div class="stat-title">Follow-ups Needed</div>
+                    </div>
+                    <div class="stat-breakdown">
+                        <div class="stat-company">
+                            <span class="company-tag company-mhc">MHC</span>
+                            <span class="stat-number-small" id="followUpJobsMHC">0</span>
+                        </div>
+                        <div class="stat-company">
+                            <span class="company-tag company-hdd">HDD</span>
+                            <span class="stat-number-small" id="followUpJobsHDD">0</span>
+                        </div>
+                        <div class="stat-total">
+                            <div class="stat-number" id="followUpJobs">0</div>
+                            <div class="stat-label">Combined Total</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -268,11 +351,17 @@
         <!-- Controls Section -->
         <section class="controls-section">
             <div class="controls-grid">
-                <div class="search-box">
-                    <input type="text" id="searchInput" placeholder="Search projects, clients, or locations...">
-                    <span class="search-icon">🔍</span>
+                <div class="controls-row-1">
+                    <div class="search-box">
+                        <input type="text" id="searchInput" placeholder="Search projects, clients, or locations...">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                    <div class="view-toggle">
+                        <button id="tableViewBtn" class="view-btn active">📋 Table</button>
+                        <button id="cardViewBtn" class="view-btn">📇 Cards</button>
+                    </div>
                 </div>
-                <div class="filter-group">
+                <div class="controls-row-2">
                     <select id="companyFilter" class="filter-select">
                         <option value="">All Companies</option>
                         <option value="MHC">MH Construction (MHC)</option>
@@ -291,12 +380,10 @@
                     <select id="estimatorFilter" class="filter-select">
                         <option value="">All Estimators</option>
                     </select>
-                    <button id="applyFiltersBtn" class="btn btn-primary">Apply Filters</button>
-                    <button id="clearFilters" class="btn btn-outline">Clear Filters</button>
-                </div>
-                <div class="view-toggle">
-                    <button id="tableViewBtn" class="view-btn active">📋 Table</button>
-                    <button id="cardViewBtn" class="view-btn">📇 Cards</button>
+                    <div class="filter-actions">
+                        <button id="applyFiltersBtn" class="btn btn-primary">Apply</button>
+                        <button id="clearFilters" class="btn btn-outline">Clear</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -313,6 +400,7 @@
                             <th>Location</th>
                             <th>Estimator</th>
                             <th>Deadline</th>
+                            <th>Follow-up</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -341,7 +429,7 @@
     </div>
 
     <!-- Job Modal -->
-    <div id="jobModal" class="modal-overlay">
+    <div id="jobModal" class="modal-overlay" style="display: none;">
         <div class="modal">
             <div class="modal-header">
                 <h2 id="modalTitle">Add New Job</h2>
@@ -352,7 +440,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label for="company">Company *</label>
-                            <select id="company" required>
+                            <select id="company" name="company" required>
                                 <option value="">Select Company</option>
                                 <option value="MHC">MH Construction (MHC)</option>
                                 <option value="HDD">High Desert Drywall (HDD)</option>
@@ -360,29 +448,33 @@
                         </div>
                         <div class="form-group">
                             <label for="projectName">Project Name *</label>
-                            <input type="text" id="projectName" required>
+                            <input type="text" id="projectName" name="projectName" required>
                         </div>
                         <div class="form-group">
                             <label for="clientName">Client *</label>
-                            <input type="text" id="clientName" required>
+                            <input type="text" id="clientName" name="clientName" required>
                         </div>
                         <div class="form-group">
                             <label for="location">Location *</label>
-                            <input type="text" id="location" required>
+                            <input type="text" id="location" name="location" required>
                         </div>
                         <div class="form-group">
                             <label for="estimator">Estimator *</label>
-                            <select id="estimator" required>
+                            <select id="estimator" name="estimator" required>
                                 <option value="">Select Estimator</option>
                             </select>
                         </div>
                         <div class="form-group">
                             <label for="deadline">Deadline *</label>
-                            <input type="date" id="deadline" required>
+                            <input type="date" id="deadline" name="deadline" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="followUpDate">Follow-up Date</label>
+                            <input type="date" id="followUpDate" name="followUpDate">
                         </div>
                         <div class="form-group">
                             <label for="status">Status *</label>
-                            <select id="status" required>
+                            <select id="status" name="status" required>
                                 <option value="">Select Status</option>
                                 <option value="In Progress">In Progress</option>
                                 <option value="Submitted">Submitted</option>
@@ -479,5 +571,7 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
     </script>
+</body>
+</html>
 </body>
 </html>
