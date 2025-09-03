@@ -1,56 +1,99 @@
 // Firebase Service Layer for Data Management
 
 class FirebaseService {
-    constructor() {
-        this.db = firebase.firestore();
-        this.auth = firebase.auth();
+    static isAvailable() {
+        return window.firebaseInitialized && typeof firebase !== 'undefined';
     }
 
-    async getEstimators() {
-        const snapshot = await this.db.collection('estimators').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    static async getJobs() {
+        if (this.isAvailable()) {
+            try {
+                const snapshot = await firebase.firestore().collection('jobs').get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error('Error fetching jobs from Firebase:', error);
+                console.warn('Falling back to local storage');
+                return this.getLocalJobs();
+            }
+        } else {
+            return this.getLocalJobs();
+        }
     }
 
-    async addEstimator(data) {
-        const docRef = await this.db.collection('estimators').add(data);
-        return docRef.id;
+    static getLocalJobs() {
+        const jobs = localStorage.getItem('mhc_jobs_backup');
+        return jobs ? JSON.parse(jobs) : [];
     }
 
-    async updateEstimator(id, data) {
-        await this.db.collection('estimators').doc(id).update(data);
-        return true;
+    static async addJob(jobData) {
+        const job = {
+            ...jobData,
+            createdAt: new Date().toISOString(),
+            id: Date.now().toString()
+        };
+
+        if (this.isAvailable()) {
+            try {
+                const docRef = await firebase.firestore().collection('jobs').add(job);
+                return { id: docRef.id, ...job };
+            } catch (error) {
+                console.error('Error adding job to Firebase:', error);
+                console.warn('Saving to local storage instead');
+                return job;
+            }
+        } else {
+            return job;
+        }
     }
 
-    async deleteEstimator(id) {
-        await this.db.collection('estimators').doc(id).delete();
-        return true;
+    static async updateJob(id, jobData) {
+        if (this.isAvailable()) {
+            try {
+                await firebase.firestore().collection('jobs').doc(id).update(jobData);
+                return { id, ...jobData };
+            } catch (error) {
+                console.error('Error updating job in Firebase:', error);
+                return { id, ...jobData };
+            }
+        } else {
+            return { id, ...jobData };
+        }
     }
 
-    async getJobs() {
-        const snapshot = await this.db.collection('jobs').get();
-        return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    static async deleteJob(id) {
+        if (this.isAvailable()) {
+            try {
+                await firebase.firestore().collection('jobs').doc(id).delete();
+            } catch (error) {
+                console.error('Error deleting job from Firebase:', error);
+            }
+        }
+        // For local storage, deletion is handled in the main app
     }
 
-    async addJob(data) {
-        const docRef = await this.db.collection('jobs').add(data);
-        return docRef.id;
+    static async getEstimators() {
+        if (this.isAvailable()) {
+            try {
+                const snapshot = await firebase.firestore().collection('estimators').get();
+                return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            } catch (error) {
+                console.error('Error fetching estimators from Firebase:', error);
+                return this.getDefaultEstimators();
+            }
+        } else {
+            return this.getDefaultEstimators();
+        }
     }
 
-    async updateJob(id, data) {
-        await this.db.collection('jobs').doc(id).update(data);
-        return true;
-    }
-
-    async deleteJob(id) {
-        await this.db.collection('jobs').doc(id).delete();
-        return true;
-    }
-
-    async isEstimatorAssigned(id) {
-        const snapshot = await this.db.collection('jobs').where('estimator', '==', id).get();
-        return !snapshot.empty;
+    static getDefaultEstimators() {
+        return [
+            { id: '1', name: 'John Smith', email: 'john@mhconstruction.com' },
+            { id: '2', name: 'Sarah Johnson', email: 'sarah@mhconstruction.com' },
+            { id: '3', name: 'Mike Davis', email: 'mike@highdesertdrywall.com' },
+            { id: '4', name: 'Lisa Wilson', email: 'lisa@mhconstruction.com' }
+        ];
     }
 }
 
-window.firebaseService = new FirebaseService();
+window.FirebaseService = FirebaseService;
 console.log('FirebaseService loaded');

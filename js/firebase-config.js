@@ -1,4 +1,4 @@
-// Firebase Configuration - Updated with actual project credentials
+// Firebase configuration - replace with your actual credentials
 const firebaseConfig = {
   apiKey: "AIzaSyD2U74NrzUevCrCqFMmEVfY3AcAxgxK3zs",
   authDomain: "bid-tracking-dashboard.firebaseapp.com",
@@ -9,15 +9,19 @@ const firebaseConfig = {
   measurementId: "G-8VR51HJJG4"
 };
 
+// Initialize Firebase with error handling
+let firebaseInitialized = false;
 try {
-  firebase.initializeApp(firebaseConfig);
-  console.log('Firebase initialized');
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        firebaseInitialized = true;
+        console.log('Firebase initialized successfully');
+    } else {
+        console.error('Firebase SDK not loaded');
+    }
 } catch (error) {
-  if (error.code === 'app/duplicate-app') {
-    console.log('Firebase already initialized');
-  } else {
     console.error('Firebase initialization failed:', error);
-  }
+    firebaseInitialized = false;
 }
 
-window.firebaseConfig = firebaseConfig;
+window.firebaseInitialized = firebaseInitialized;
